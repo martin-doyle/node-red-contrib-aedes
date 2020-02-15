@@ -4,7 +4,7 @@ MQTT Broker for Node-RED based on [Aedes](https://github.com/moscajs/aedes).
 You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosquitto.
 
 
-[![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)
+[![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)](https://travis-ci.org/martin-doyle/node-red-contrib-aedes)
 
 [![Dependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes)
 [![devDependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes/dev-status.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes#info=devDependencies)
