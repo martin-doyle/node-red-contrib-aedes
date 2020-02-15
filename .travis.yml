@@ -1,0 +1,18 @@
+sudo: false
+language: node_js
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
+services:
+  - mongodb      
+node_js:
+  - "12"
+before_script:
+  - npm install -g node-red
+  - npm link node-red
+  - npm install -g mocha
