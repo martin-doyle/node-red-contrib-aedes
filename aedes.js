@@ -25,13 +25,15 @@ module.exports = function (RED) {
     RED.nodes.createNode(this, config);
     this.mqtt_port = parseInt(config.mqtt_port);
     this.mqtt_ws_port = parseInt(config.mqtt_ws_port);
+    var node = this;
 
     var aedesSettings = {};
 
     if (config.dburl) {
       aedesSettings.persistence = mongoPersistence({
         url: config.dburl
-      })
+      });
+      node.log('Start persistence to MongeDB');
     }
 
     const broker = new aedes.Server(aedesSettings);
@@ -71,8 +73,6 @@ module.exports = function (RED) {
       });
     }
 
-    var node = this;
-
     if (config.username && config.password) {
       var authenticate = function (client, username, password, callback) {
         var authorized = (username == config.username && password == config.password);
@@ -80,7 +80,7 @@ module.exports = function (RED) {
         callback(null, authorized);
       };
 
-      server.authenticate = authenticate
+      broker.authenticate = authenticate
     }
 
     broker.on('client', function (client) {

@@ -1,10 +1,7 @@
-var should = require("should");
-var helper = require('node-red-node-test-helper');
-var aedesNode = require('../aedes.js');
-// Node-Red Version 0.20
-//var mqttNode = require('../node_modules/@node-red/nodes/core/io/10-mqtt.js');
-// Node-Red Version 1.0
-var mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
+const should = require("should");
+const helper = require('node-red-node-test-helper');
+const aedesNode = require('../aedes.js');
+const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
 
 helper.init(require.resolve('node-red'));
 
