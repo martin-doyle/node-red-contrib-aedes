@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-aedes",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
     "aedes-persistence-mongodb": "^7.0.0",
