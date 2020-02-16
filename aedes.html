@@ -50,7 +50,7 @@
         category: 'network',
         defaults: {
         	mqtt_port: {value:1883, validate:RED.validators.number()},
-        	mqtt_ws_port: {value:8080, required:false},
+        	mqtt_ws_port: {value:null,required:false,validate:RED.validators.number(true)},
             name: {value:""},
             username: {value:"", required:false},
             password: {value:"", required:false},

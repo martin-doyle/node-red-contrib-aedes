@@ -8,10 +8,11 @@
     "websocket-stream": "^5.0.0"
   },
   "devDependencies": {
-    "node-red-node-test-helper": "^0.2.0"
+    "node-red-node-test-helper": "^0.2.0",
+    "mqtt": "^3.0.0"
   },
   "scripts": {
-    "test": "mocha test/**/*.js"
+    "test": "mocha test/**/*_spec.js"
   },
   "node-red": {
     "nodes": {

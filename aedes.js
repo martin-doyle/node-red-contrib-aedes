@@ -21,7 +21,7 @@ module.exports = function (RED) {
   const net = require('net');
   const ws = require('websocket-stream');
 
-  function AedesInNode(config) {
+  function AedesBrokerNode(config) {
     RED.nodes.createNode(this, config);
     this.mqtt_port = parseInt(config.mqtt_port);
     this.mqtt_ws_port = parseInt(config.mqtt_ws_port);
@@ -42,23 +42,28 @@ module.exports = function (RED) {
     let wss = null;
 
     if (this.mqtt_ws_port) {
+      // Awkward check since http or ws do not fire an error event in case the port is in use
       const testServer = net.createServer();
       testServer.once('error', function (err) {
         if (err.code === 'EADDRINUSE') {
           node.error('Error: Port ' + config.mqtt_ws_port + ' is already in use');
+        } else {
+          node.error('Error creating net server on port ' + config.mqtt_ws_port + ', ' + err.toString());
         }
       });
       testServer.once('listening', function () {
         testServer.close();
       });
+
       testServer.once('close', function () {
         wss = ws.createServer({
           port: config.mqtt_ws_port
-        }, aedes.handle);
+        }, broker.handle);
       });
       testServer.listen(config.mqtt_ws_port, function () {
-        node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+        node.log('Checking ws port: ' + config.mqtt_ws_port);
       });
+
     }
 
     server.once('error', function (err) {
@@ -169,6 +174,19 @@ module.exports = function (RED) {
       node.send(msg);
     });
 
+    /*
+    broker.on('publish', function(packet,client) {
+      var msg = {
+        topic: 'publish',
+        payload: {
+          packet: packet,
+          client: client
+        }
+      };
+      node.send(msg);
+    });
+    */
+
     broker.on('closed', function () {
       node.log('Closed event');
     });
@@ -188,5 +206,5 @@ module.exports = function (RED) {
     });
   }
 
-  RED.nodes.registerType('aedes broker', AedesInNode);
+  RED.nodes.registerType('aedes broker', AedesBrokerNode);
 };
