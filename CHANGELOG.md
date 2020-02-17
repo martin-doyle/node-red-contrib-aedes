@@ -1,6 +1,6 @@
 # node-red-contrib-aeades Changelog
 
-## Feb 16, 2020, Version 0.0.1
+## Feb 16, 2020, Version 0.1.0
 
 ### Notable changes
  - Add authentication
