@@ -191,17 +191,20 @@ module.exports = function (RED) {
       node.log('Closed event');
     });
 
-    this.on('close', function () {
+    this.on('close', function (done) {
       node.log('Unbinding aedes mqtt server from port: ' + this.mqtt_port);
       broker.close(function () {
         server.close(function () {
           node.log('after server.close(): ');
+          if (wss) {
+            wss.close(function () {
+              node.log('after wss.close(): ');
+              done();
+            });
+          } else {
+            done();
+          }
         });
-        if (wss) {
-          wss.close(function () {
-            node.log('after wss.close(): ');
-          });
-        }
       });
     });
   }
