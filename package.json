@@ -31,7 +31,17 @@
   "author": {
     "name": "Martin Doyle",
     "email": "martin-doyle@online.de"
-  },
+  },  
+  "contributors": [
+    {
+      "name": "zuhito",
+      "email": "zuhito@hotmail.co.jp"
+    },  
+    {
+      "name": "Jochen Scheib",
+      "email": "webmaster@mapero.de"
+    }
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/martin-doyle/node-red-contrib-aedes/issues"
