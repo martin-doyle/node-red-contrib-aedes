@@ -59,6 +59,7 @@ module.exports = function (RED) {
         wss = ws.createServer({
           port: config.mqtt_ws_port
         }, broker.handle);
+        node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
       });
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
@@ -192,13 +193,14 @@ module.exports = function (RED) {
     });
 
     this.on('close', function (done) {
-      node.log('Unbinding aedes mqtt server from port: ' + this.mqtt_port);
       broker.close(function () {
+        node.log('Unbinding aedes mqtt server from port: ' + this.mqtt_port);
         server.close(function () {
-          node.log('after server.close(): ');
+          node.debug('after server.close(): ');
           if (wss) {
+            node.log('Unbinding aedes mqtt server from ws port: ' + this.mqtt_ws_port);
             wss.close(function () {
-              node.log('after wss.close(): ');
+              node.debug('after wss.close(): ');
               done();
             });
           } else {
