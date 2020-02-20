@@ -81,7 +81,7 @@ module.exports = function (RED) {
 
     if (config.credentials.username && config.credentials.password) {
       var authenticate = function (client, username, password, callback) {
-        var authorized = (username == config.username && password == config.password);
+        var authorized = (username == config.credentials.username && password == config.credentials.password);
         if (authorized) client.user = username;
         callback(null, authorized);
       };
