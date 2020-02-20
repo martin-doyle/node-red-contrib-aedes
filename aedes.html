@@ -49,12 +49,14 @@
     RED.nodes.registerType('aedes broker',{
         category: 'network',
         defaults: {
-        	mqtt_port: {value:1883, validate:RED.validators.number()},
-        	mqtt_ws_port: {value:null,required:false,validate:RED.validators.number(true)},
+            mqtt_port: {value:1883, validate:RED.validators.number()},
+            mqtt_ws_port: {value:null,required:false,validate:RED.validators.number(true)},
             name: {value:""},
-            username: {value:"", required:false},
-            password: {value:"", required:false},
             dburl: {value:"", required:false}
+        },
+        credentials: {
+            username: {type:"text"},
+            password: {type: "password"}
         },
         color:"#d8bfd8",
         inputs:0,
