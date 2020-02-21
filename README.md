@@ -15,7 +15,7 @@ You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosq
 ## Background
 This node was created because the original MQTT broker [node-red-contrib-mqtt-broker](https://github.com/zuhito/node-red-contrib-mqtt-broker) uses [mosca](https://github.com/moscajs/mosca) which is no longer maintained.
 ## Flows
-Once you just put this node on Node-RED and hit deploy button, MQTT Broker will run on your Node-RED.
+Just put this node on Node-RED and hit the deploy button. The MQTT Broker will run on your Node-RED instance.
 
 ![flows](https://raw.githubusercontent.com/martin-doyle/node-red-contrib-aedes/master/flows.png)
 

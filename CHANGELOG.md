@@ -1,5 +1,20 @@
 # node-red-contrib-aeades Changelog
 
+## Feb 20, 2020, Version 0.2.0
+
+### Notable changes
+ - Add status to node
+ 
+### Fixes:
+ - Move username and password to credentials
+
+## Feb 17, 2020, Version 0.1.1
+
+### Fixes:
+
+ - Fix another "port already in use" error
+
+
 ## Feb 16, 2020, Version 0.1.0
 
 ### Notable changes
