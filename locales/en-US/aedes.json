@@ -1,0 +1,8 @@
+{
+    "aedes-mqtt-broker" : { 
+        "status": {
+            "connected": "connected __count__",
+            "connected_plural": "connected __count__"
+        }
+    }
+}

@@ -23,6 +23,10 @@ module.exports = function (RED) {
 
   function AedesBrokerNode(config) {
     RED.nodes.createNode(this, config);
+    if (this.credentials) {
+      this.username = this.credentials.username;
+      this.password = this.credentials.password;
+    }
     this.mqtt_port = parseInt(config.mqtt_port);
     this.mqtt_ws_port = parseInt(config.mqtt_ws_port);
     var node = this;
@@ -59,6 +63,7 @@ module.exports = function (RED) {
         wss = ws.createServer({
           port: config.mqtt_ws_port
         }, broker.handle);
+        node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
       });
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
@@ -69,18 +74,23 @@ module.exports = function (RED) {
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error('Error: Port ' + config.mqtt_port + ' is already in use');
+        node.status({fill:"red",shape:"ring",text:"node-red:common.status.disconnected"});
+      } else {
+        node.error('Error: Port ' + config.mqtt_port + ' '  + err.toString());
+        node.status({fill:"red",shape:"ring",text:"node-red:common.status.disconnected"});
       }
     });
 
     if (this.mqtt_port) {
       server.listen(this.mqtt_port, function () {
         node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
+        node.status({fill:"green",shape:"dot",text:"node-red:common.status.connected"});
       });
     }
 
-    if (config.username && config.password) {
+    if (this.credentials && this.username && this.password) {
       var authenticate = function (client, username, password, callback) {
-        var authorized = (username == config.username && password == config.password);
+        var authorized = (username == node.username && password == node.password);
         if (authorized) client.user = username;
         callback(null, authorized);
       };
@@ -105,6 +115,7 @@ module.exports = function (RED) {
           client: client
         }
       };
+      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
       node.send(msg);
     });
 
@@ -116,6 +127,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
     });
 
     broker.on('clientError', function (client, err) {
@@ -127,6 +139,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
     });
 
     broker.on('connectionError', function (client, err) {
@@ -138,6 +151,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
     });
 
     broker.on('keepaliveTimeout', function (client) {
@@ -148,6 +162,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
     });
 
     broker.on('subscribe', function (subscription, client) {
@@ -188,17 +203,18 @@ module.exports = function (RED) {
     */
 
     broker.on('closed', function () {
-      node.log('Closed event');
+      node.debug('Closed event');
     });
 
     this.on('close', function (done) {
-      node.log('Unbinding aedes mqtt server from port: ' + this.mqtt_port);
       broker.close(function () {
+        node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
         server.close(function () {
-          node.log('after server.close(): ');
+          node.debug('after server.close(): ');
           if (wss) {
+            node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
             wss.close(function () {
-              node.log('after wss.close(): ');
+              node.debug('after wss.close(): ');
               done();
             });
           } else {
@@ -209,5 +225,10 @@ module.exports = function (RED) {
     });
   }
 
-  RED.nodes.registerType('aedes broker', AedesBrokerNode);
+  RED.nodes.registerType('aedes broker', AedesBrokerNode, {
+     credentials: {
+         username: {type:"text"},
+         password: {type:"password"}
+     }
+  });
 };
