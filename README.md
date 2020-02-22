@@ -5,10 +5,9 @@ You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosq
 
 
 [![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)](https://travis-ci.org/martin-doyle/node-red-contrib-aedes)
-
+[![js-semistandard-style](https://img.shields.io/badge/code%20style-semistandard-brightgreen.svg?style=flat-square)](https://github.com/standard/semistandard)\
 [![Dependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes)
-[![devDependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes/dev-status.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes#info=devDependencies)
-
+[![devDependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes/dev-status.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes#info=devDependencies)\
 [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 [![NPM version](https://img.shields.io/npm/v/node-red-contrib-aedes.svg?style=flat)](https://www.npmjs.com/node-red-contrib-aedes)
 

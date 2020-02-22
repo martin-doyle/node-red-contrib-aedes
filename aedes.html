@@ -16,33 +16,29 @@
 
 <script type="text/x-red" data-template-name="aedes broker">
     <div class="form-row">
-        <label for="node-input-mqtt_port"><i class="fa fa-globe"></i> MQTT port</label>
-        <input type="text" id="node-input-mqtt_port" placeholder="Enter MQTT port">
+        <label for="node-input-mqtt_port"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_port"></span></label>
+        <input type="text" id="node-input-mqtt_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_port">
     </div>
     <div class="form-row">
-        <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> MQTT WS port</label>
-        <input type="text" id="node-input-mqtt_ws_port" placeholder="Enter WS port. Leave blank to disable">
+        <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_ws_port"></label>
+        <input type="text" id="node-input-mqtt_ws_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_port">
     </div>
     <div class="form-row">
-        <label for="node-input-dburl"><i class="fa fa-globe"></i> DB Url</label>
-        <input type="text" id="node-input-dburl" placeholder="mongodb://localhost:27017/mqtt">
+        <label for="node-input-dburl"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.dburl"></label>
+        <input type="text" id="node-input-dburl" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.dburl">
     </div>
     <div class="form-row">
-        <label for="node-input-username"><i class="fa fa-user"></i> Username</label>
-        <input type="text" id="node-input-username" placeholder="leave blank to disable">
+        <label for="node-input-username"><i class="fa fa-user"></i> <span data-i18n="node-red:common.label.username"></span></label>
+        <input type="text" id="node-input-username" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.username">
     </div>
     <div class="form-row">
-        <label for="node-input-password"><i class="fa fa-key"></i> Password</label>
-        <input type="password" id="node-input-password" placeholder="leave blank to disable">
+        <label for="node-input-password"><i class="fa fa-lock"></i> <span data-i18n="node-red:common.label.password"></span></label>
+        <input type="password" id="node-input-password" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.password">
     </div>
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="node-red:common.label.name"></span></label>
+        <input type="text" id="node-config-input-name" data-i18n="[placeholder]node-red:common.label.name">
     </div>
-</script>
-
-<script type="text/x-red" data-help-name="aedes broker">
-    <p>MQTT broker based on Barebone MQTT broker Aedes. You can use MQTT-in and MQTT-out nodes without an external broker like Mosquitto.</p>
 </script>
 
 <script type="text/javascript">
