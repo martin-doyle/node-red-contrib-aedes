@@ -21,7 +21,7 @@ module.exports = function (RED) {
   const net = require('net');
   const ws = require('websocket-stream');
 
-  function AedesBrokerNode(config) {
+  function AedesBrokerNode (config) {
     RED.nodes.createNode(this, config);
     if (this.credentials) {
       this.username = this.credentials.username;
@@ -68,34 +68,33 @@ module.exports = function (RED) {
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
       });
-
     }
 
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error('Error: Port ' + config.mqtt_port + ' is already in use');
-        node.status({fill:"red",shape:"ring",text:"node-red:common.status.disconnected"});
+        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
       } else {
-        node.error('Error: Port ' + config.mqtt_port + ' '  + err.toString());
-        node.status({fill:"red",shape:"ring",text:"node-red:common.status.disconnected"});
+        node.error('Error: Port ' + config.mqtt_port + ' ' + err.toString());
+        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
       }
     });
 
     if (this.mqtt_port) {
       server.listen(this.mqtt_port, function () {
         node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
-        node.status({fill:"green",shape:"dot",text:"node-red:common.status.connected"});
+        node.status({ fill: 'green', shape: 'dot', text: 'node-red:common.status.connected' });
       });
     }
 
     if (this.credentials && this.username && this.password) {
       var authenticate = function (client, username, password, callback) {
-        var authorized = (username == node.username && password == node.password);
+        var authorized = (username === node.username && password === node.password);
         if (authorized) client.user = username;
         callback(null, authorized);
       };
 
-      broker.authenticate = authenticate
+      broker.authenticate = authenticate;
     }
 
     broker.on('client', function (client) {
@@ -115,7 +114,7 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
       node.send(msg);
     });
 
@@ -127,7 +126,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
-      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('clientError', function (client, err) {
@@ -139,7 +138,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
-      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('connectionError', function (client, err) {
@@ -151,7 +150,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
-      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('keepaliveTimeout', function (client) {
@@ -162,7 +161,7 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
-      node.status({fill:"green",shape:"dot",text:RED._("aedes-mqtt-broker.status.connected", {count: broker.connectedClients} )});
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('subscribe', function (subscription, client) {
@@ -226,9 +225,9 @@ module.exports = function (RED) {
   }
 
   RED.nodes.registerType('aedes broker', AedesBrokerNode, {
-     credentials: {
-         username: {type:"text"},
-         password: {type:"password"}
-     }
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' }
+    }
   });
 };
