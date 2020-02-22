@@ -9,7 +9,7 @@ addons:
     packages:
       - g++-4.8
 services:
-  - mongodb      
+  - mongodb
 node_js:
   - "12"
 before_script:

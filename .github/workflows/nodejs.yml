@@ -21,7 +21,7 @@ jobs:
     - run: npm install -g node-red
     - run: npm link node-red
     - run: npm install -g mocha
-    - run: npm install semistandard -g
+    - run: npm install -g semistandard
     - run: npm install -g snazzy
     - run: npm run build --if-present
     - run: npm test
