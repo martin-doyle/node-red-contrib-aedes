@@ -16,57 +16,200 @@
 
 <script type="text/x-red" data-template-name="aedes broker">
     <div class="form-row">
-        <label for="node-input-mqtt_port"><i class="fa fa-globe"></i> MQTT port</label>
-        <input type="text" id="node-input-mqtt_port" placeholder="Enter MQTT port">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="node-red:common.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]node-red:common.label.name">
     </div>
     <div class="form-row">
-        <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> MQTT WS port</label>
-        <input type="text" id="node-input-mqtt_ws_port" placeholder="Enter WS port. Leave blank to disable">
+        <ul style="min-width: 600px; margin-bottom: 20px;" id="node-config-aedes-broker-tabs"></ul>
     </div>
-    <div class="form-row">
-        <label for="node-input-dburl"><i class="fa fa-globe"></i> DB Url</label>
-        <input type="text" id="node-input-dburl" placeholder="mongodb://localhost:27017/mqtt">
+    <div id="node-config-aedes-broker-tabs-content" style="min-height:150px;">
+        <div id="aedes-broker-tab-connection" style="display:none">
+            <div class="form-row">
+                <label for="node-input-mqtt_port"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_port"></span></label>
+                <input type="text" id="node-input-mqtt_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_port">
+            </div>
+            <div class="form-row">
+                <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_ws_port"></label>
+                <input type="text" id="node-input-mqtt_ws_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_port">
+            </div>
+            <div class="form-row">
+                <input type="checkbox" id="node-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
+                <label for="node-input-usetls" style="width: auto" data-i18n="aedes-mqtt-broker.label.use-tls"></label>
+                <div id="node-row-tls" class="hide">
+                    <div class="form-row">
+                        <label style="width: 120px;"><i class="fa fa-file-text-o"></i> <span data-i18n="aedes-mqtt-broker.label.cert"></span></label>
+                        <span class="tls-input-data">
+                            <label class="red-ui-button" for="node-input-certfile"><i class="fa fa-upload"></i> <span data-i18n="aedes-mqtt-broker.label.upload"></span></label>
+                            <input class="hide" type="file" id="node-input-certfile">
+                            <span id="tls-certname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
+                            <button class="red-ui-button red-ui-button-small" id="tls-button-cert-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+                        </span>
+                        <input type="hidden" id="node-input-certname">
+                        <input type="hidden" id="node-input-certdata">
+                        <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-cert" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.cert">
+                    </div>
+                    <div class="form-row">
+                        <label style="width: 120px;" for="node-input-key"><i class="fa fa-file-text-o"></i> <span data-i18n="aedes-mqtt-broker.label.key"></span></label>
+                        <span class="tls-input-data">
+                            <label class="red-ui-button" for="node-input-keyfile"><i class="fa fa-upload"></i> <span data-i18n="aedes-mqtt-broker.label.upload"></span></label>
+                            <input class="hide" type="file" id="node-input-keyfile">
+                            <span id="tls-keyname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
+                            <button class="red-ui-button red-ui-button-small" id="tls-button-key-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+                        </span>
+                        <input type="hidden" id="node-input-keyname">
+                        <input type="hidden" id="node-input-keydata">
+                        <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-key" data-i18n="[placeholder]tls.placeholder.key">
+                    </div>
+                </div>
+            </div>
+            <div class="form-row">
+                <label for="node-input-dburl"><i class="fa fa-database"></i> <span data-i18n="aedes-mqtt-broker.label.dburl"></label>
+                <input type="text" id="node-input-dburl" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.dburl">
+            </div>
+        </div>
+        <div id="aedes-broker-tab-security" style="display:none">
+            <div class="form-row">
+                <label for="node-input-username"><i class="fa fa-user"></i> <span data-i18n="node-red:common.label.username"></span></label>
+                <input type="text" id="node-input-username" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.username">
+            </div>
+            <div class="form-row">
+                <label for="node-input-password"><i class="fa fa-lock"></i> <span data-i18n="node-red:common.label.password"></span></label>
+                <input type="password" id="node-input-password" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.password">
+            </div>
+        </div>
     </div>
-    <div class="form-row">
-        <label for="node-input-username"><i class="fa fa-user"></i> Username</label>
-        <input type="text" id="node-input-username" placeholder="leave blank to disable">
-    </div>
-    <div class="form-row">
-        <label for="node-input-password"><i class="fa fa-key"></i> Password</label>
-        <input type="password" id="node-input-password" placeholder="leave blank to disable">
-    </div>
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-</script>
-
-<script type="text/x-red" data-help-name="aedes broker">
-    <p>MQTT broker based on Barebone MQTT broker Aedes. You can use MQTT-in and MQTT-out nodes without an external broker like Mosquitto.</p>
 </script>
 
 <script type="text/javascript">
-    RED.nodes.registerType('aedes broker',{
-        category: 'network',
-        defaults: {
-            mqtt_port: {value:1883, validate:RED.validators.number()},
-            mqtt_ws_port: {value:null,required:false,validate:RED.validators.number(true)},
-            name: {value:""},
-            dburl: {value:"", required:false}
-        },
-        credentials: {
-            username: {type:"text"},
-            password: {type: "password"}
-        },
-        color:"#d8bfd8",
-        inputs:0,
-        outputs:1,
-        icon: "aedes.png",
-        label: function() {
-            return this.name||"Aedes MQTT broker";
-        },
-        labelStyle: function() {
-            return this.name?"node_label_italic":"";
+  RED.nodes.registerType('aedes broker', {
+    category: 'network',
+    defaults: {
+      name: { value: '' },
+      mqtt_port: { value: 1883, validate: RED.validators.number() },
+      mqtt_ws_port: { value: null, required: false, validate: RED.validators.number(true) },
+      cert: {
+        value: '',
+        validate: function (v) {
+          var currentKey = $('#node-input-key').val();
+          if (currentKey === undefined) {
+            currentKey = this.key;
+          }
+          return currentKey === '' || v != '';
         }
-    });
+      },
+      key: {
+        value: '',
+        validate: function (v) {
+          var currentCert = $('#node-nput-cert').val();
+          if (currentCert === undefined) {
+            currentCert = this.cert;
+          }
+          return currentCert === '' || v != '';
+        }
+      },
+      certname: { value: '' },
+      keyname: { value: '' },
+      dburl: { value: '', required: false },
+      usetls: { value: false }
+    },
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' },
+      certdata: { type: 'text' },
+      keydata: { type: 'text' }
+    },
+    color: '#d8bfd8',
+    inputs: 0,
+    outputs: 1,
+    icon: 'aedes.png',
+    label: function () {
+      return this.name || 'Aedes MQTT broker';
+    },
+    labelStyle: function () {
+      return this.name ? 'node_label_italic' : '';
+    },
+    oneditprepare: function () {
+      var tabs = RED.tabs.create({
+        id: 'node-config-aedes-broker-tabs',
+        onchange: function (tab) {
+          $('#node-config-aedes-broker-tabs-content').children().hide();
+          $('#' + tab.id).show();
+        }
+      });
+      tabs.addTab({
+        id: 'aedes-broker-tab-connection',
+        label: this._('aedes-mqtt-broker.tabs-label.connection')
+      });
+      tabs.addTab({
+        id: 'aedes-broker-tab-security',
+        label: this._('aedes-mqtt-broker.tabs-label.security')
+      });
+      setTimeout(function () {
+        tabs.resize();
+      }, 0);
+      if (typeof this.usetls === 'undefined') {
+        this.usetls = false;
+        $('#node-input-usetls').prop('checked', false);
+      }
+
+      function updateTLSOptions () {
+        if ($('#node-input-usetls').is(':checked')) {
+          $('#node-row-tls').show();
+        } else {
+          $('#node-row-tls').hide();
+        }
+      }
+
+      updateTLSOptions();
+
+      function saveFile (property, file) {
+        var dataInputId = '#node-input-' + property + 'data';
+        var filenameInputId = '#node-input-' + property + 'name';
+        var filename = file.name;
+        var reader = new FileReader();
+        reader.onload = function (event) {
+          $('#tls-' + property + 'name').text(filename);
+          $(filenameInputId).val(filename);
+          $(dataInputId).val(event.target.result);
+        };
+        reader.readAsArrayBuffer(file);
+      }
+      $('#node-input-usetls').on('click', function () {
+        updateTLSOptions();
+      });
+      $('#node-input-certfile').on('change', function () {
+        saveFile('cert', this.files[0]);
+      });
+      $('#node-input-keyfile').on('change', function () {
+        saveFile('key', this.files[0]);
+      });
+      function clearNameData (prop) {
+        $('#tls-' + prop + 'name').text('');
+        $('#node-input-' + prop + 'data').val('');
+        $('#node-input-' + prop + 'name').val('');
+      }
+      $('#tls-button-cert-clear').on('click', function () {
+        clearNameData('cert');
+      });
+      $('#tls-button-key-clear').on('click', function () {
+        clearNameData('key');
+      });
+
+      function updateFileUpload () {
+        $('.tls-input-data').show();
+        $('.tls-input-path').hide();
+      }
+      $('#tls-certname').text(this.certname);
+      $('#tls-keyname').text(this.keyname);
+      $('#tls-caname').text(this.caname);
+      updateFileUpload();
+    },
+    oneditsave: function () {
+      if (!$('#node-input-usetls').is(':checked')) {
+        $('#node-input-tls').val('');
+      }
+      $('#node-input-cert').val('');
+      $('#node-input-key').val('');
+    }
+  });
 </script>
