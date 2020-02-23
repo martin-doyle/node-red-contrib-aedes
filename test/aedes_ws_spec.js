@@ -6,15 +6,13 @@ const mqtt = require('mqtt/mqtt.js');
 
 helper.init(require.resolve('node-red'));
 
-describe('MQTT Broker Node', function () {
+describe('MQTT Broker Node Websocket', function () {
   beforeEach(function (done) {
     helper.startServer(done);
-    console.log('Test: Start Server');
   });
   afterEach(function (done) {
     helper.unload().then(function () {
       helper.stopServer(done);
-      console.log('Test: Stop Server');
     });
   });
 
@@ -37,9 +35,9 @@ describe('MQTT Broker Node', function () {
       }
     ],
     function () {
-      var n1 = helper.getNode('n1');
+      const n1 = helper.getNode('n1');
       n1.should.have.property('name', 'Aedes 1883');
-      var n11 = helper.getNode('n11');
+      const n11 = helper.getNode('n11');
       n11.should.have.property('name', 'Aedes 1884');
       done();
     });
@@ -47,7 +45,7 @@ describe('MQTT Broker Node', function () {
 
   it('a subscriber should receive a message from an external publisher', function (done) {
     this.timeout(10000); // have to wait for the inject with delay of 10 seconds
-    var flow = [
+    const flow = [
       {
         id: 'n1',
         type: 'aedes broker',
@@ -81,26 +79,25 @@ describe('MQTT Broker Node', function () {
         port: '1883'
       }
     ];
-    var client = mqtt.connect('ws://localhost:8080', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+    const client = mqtt.connect('ws://localhost:8080', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
     client.on('error', function (err) {
       console.log('Error: ', err.toString());
     });
     client.on('connect', function () {
-      console.log('External client connected');
+      // console.log('External client connected');
     });
     helper.load([aedesNode, mqttNode], flow, function () {
-      var n2 = helper.getNode('n2');
-      var n5 = helper.getNode('n5');
+      const n2 = helper.getNode('n2');
+      const n5 = helper.getNode('n5');
       n2.on('input', function (msg) {
-        console.log('Broker received message with topic ' + msg.topic);
         if (msg.topic === 'subscribe') {
-          console.log('Client subscribed');
           client.publish('test1883', 'test');
         }
       });
       n5.on('input', function (msg) {
-        console.log(msg);
+        // console.log(msg);
         msg.should.have.property('topic', 'test1883');
+        client.end();
         done();
       });
     });
