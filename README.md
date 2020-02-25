@@ -22,7 +22,7 @@ npm install node-red-contrib-aedes
 ```
 ## Flows
 Just put this node on Node-RED and hit the deploy button. The MQTT Broker will run on your Node-RED instance.
-![flows](https://raw.githubusercontent.com/martin-doyle/node-red-contrib-aedes/master/flows.png)
+![flows](./flows.png)
 
 ## Features
  - Standard TCP Support
