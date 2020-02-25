@@ -32,7 +32,7 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
  
  For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
  
- ## License
+## License
  
  Licensed under [MIT](./LICENSE).
 
