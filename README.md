@@ -3,7 +3,6 @@ MQTT Broker for Node-RED based on [Aedes](https://github.com/moscajs/aedes).
 
 You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosquitto.
 
-
 [![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)](https://travis-ci.org/martin-doyle/node-red-contrib-aedes)
 [![js-semistandard-style](https://img.shields.io/badge/code%20style-semistandard-brightgreen.svg?style=flat-square)](https://github.com/standard/semistandard)\
 [![Dependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes)
@@ -25,14 +24,13 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 ![flows](./flows.png)
 
 ## Features
- - Standard TCP Support
- - WebSocket Support
- - SSL / TLS
- - Message Persistence (not yet tested)
+- Standard TCP Support
+- WebSocket Support
+- SSL / TLS
+- Message Persistence (not yet tested)
  
- For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
+For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
  
 ## License
  
  Licensed under [MIT](./LICENSE).
-
