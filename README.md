@@ -13,12 +13,26 @@ You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosq
 
 ## Background
 This node was created because the original MQTT broker [node-red-contrib-mqtt-broker](https://github.com/zuhito/node-red-contrib-mqtt-broker) uses [mosca](https://github.com/moscajs/mosca) which is no longer maintained.
+## Installation
+You can install the node directly within the editor by using the [Palette Manager](https://nodered.org/docs/user-guide/editor/palette/manager).
+
+To install the node from the command-line, you can use the following command from within your user data directory (by default, ```$HOME/.node-red```):
+```sh
+npm install node-red-contrib-aedes
+```
 ## Flows
 Just put this node on Node-RED and hit the deploy button. The MQTT Broker will run on your Node-RED instance.
-
 ![flows](https://raw.githubusercontent.com/martin-doyle/node-red-contrib-aedes/master/flows.png)
 
-You can set "localhost" in MQTT-in and MQTT-out properties as follows.
-
-![setting](https://raw.githubusercontent.com/martin-doyle/node-red-contrib-aedes/master/setting.png)
+## Features
+ - Standard TCP Support
+ - WebSocket Support
+ - SSL / TLS
+ - Message Persistence (not yet tested)
+ 
+ For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
+ 
+ ## License
+ 
+ Licensed under [MIT](./LICENSE).
 

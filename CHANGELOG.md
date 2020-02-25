@@ -1,5 +1,13 @@
 # node-red-contrib-aeades Changelog
 
+## Feb 25, 2020, Version 0.3.0
+### Notable changes
+ - Add secure SSL / TLS connection
+### Fixes:
+ - Reformat code to [semistandard](https://github.com/standard/semistandard)
+ - Prepare internationaization (only en-US implemented so far)
+ - Rearrange property windows to allow more features 
+
 ## Feb 20, 2020, Version 0.2.0
 
 ### Notable changes
