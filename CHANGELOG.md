@@ -3,7 +3,7 @@
 ## Feb 25, 2020, Version 0.3.0
 ### Notable changes
 - Add secure SSL / TLS connection
-### Fixes:
+### Fixes
 - Reformat code to [semistandard](https://github.com/standard/semistandard)
 - Prepare internationaization (only en-US implemented so far)
 - Rearrange property windows to allow more features 
@@ -13,12 +13,12 @@
 ### Notable changes
 - Add status to node
  
-### Fixes:
+### Fixes
 - Move username and password to credentials
 
 ## Feb 17, 2020, Version 0.1.1
 
-### Fixes:
+### Fixes
 
 - Fix another "port already in use" error
 
@@ -28,7 +28,7 @@
  - Add authentication
  - Add mqtt over websocket
 
-### Fixes:
+### Fixes
 
 - Fix "port already in use" errors
  
