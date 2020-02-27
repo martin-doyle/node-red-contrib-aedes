@@ -22,7 +22,6 @@
 
 - Fix another "port already in use" error
 
-
 ## Feb 16, 2020, Version 0.1.0
 
 ### Notable changes
