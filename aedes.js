@@ -24,8 +24,8 @@ module.exports = function (RED) {
 
   function AedesBrokerNode (config) {
     RED.nodes.createNode(this, config);
-    this.mqtt_port = parseInt(config.mqtt_port);
-    this.mqtt_ws_port = parseInt(config.mqtt_ws_port);
+    this.mqtt_port = parseInt(config.mqtt_port, 10);
+    this.mqtt_ws_port = parseInt(config.mqtt_ws_port, 10);
     this.usetls = config.usetls;
 
     if (this.credentials) {
@@ -113,7 +113,7 @@ module.exports = function (RED) {
     if (this.credentials && this.username && this.password) {
       const authenticate = function (client, username, password, callback) {
         var authorized = (username === node.username && password.toString() === node.password);
-        if (authorized) client.user = username;
+        if (authorized) { client.user = username; }
         callback(null, authorized);
       };
 
