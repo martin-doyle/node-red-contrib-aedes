@@ -107,3 +107,4 @@ dist
 .idea
 /test/secure/
 /test/aedes_secure_spec.js
+/secure/
