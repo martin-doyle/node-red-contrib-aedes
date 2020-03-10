@@ -20,6 +20,8 @@ module.exports = function (RED) {
   const aedes = require('aedes');
   const net = require('net');
   const tls = require('tls');
+  const http = require('http');
+  const https = require('https');
   const ws = require('websocket-stream');
 
   function AedesBrokerNode (config) {
@@ -65,6 +67,7 @@ module.exports = function (RED) {
     }
 
     let wss = null;
+    let httpServer = null;
 
     if (this.mqtt_ws_port) {
       // Awkward check since http or ws do not fire an error event in case the port is in use
@@ -81,12 +84,17 @@ module.exports = function (RED) {
       });
 
       testServer.once('close', function () {
-        if (!node.usetls) {
-          wss = ws.createServer({
-            port: config.mqtt_ws_port
-          }, broker.handle);
-          node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+        if (node.usetls) {
+          httpServer = https.createServer(serverOptions);
+        } else {
+          httpServer = http.createServer();
         }
+        wss = ws.createServer({
+          server: httpServer
+        }, broker.handle);
+        httpServer.listen(config.mqtt_ws_port, function () {
+          node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+        });
       });
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
@@ -237,7 +245,10 @@ module.exports = function (RED) {
             node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
             wss.close(function () {
               node.debug('after wss.close(): ');
-              done();
+              httpServer.close(function () {
+                node.debug('after httpServer.close(): ');
+                done();
+              });
             });
           } else {
             done();
