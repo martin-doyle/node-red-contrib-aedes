@@ -1,5 +1,10 @@
 # node-red-contrib-aeades Changelog
 
+## March 10, 2020, Version 0.3.1
+
+### Notable changes
+- Add secure WSS connection
+
 ## Feb 25, 2020, Version 0.3.0
 ### Notable changes
 - Add secure SSL / TLS connection

@@ -294,7 +294,7 @@ describe('MQTT Broker Node', function () {
     ];
     const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
     client.on('error', function (err) {
-      console.log('Error: ', err.toString());
+      console.error('Error: ', err.toString());
     });
     client.on('connect', function () {
       // console.log('External client connected');
