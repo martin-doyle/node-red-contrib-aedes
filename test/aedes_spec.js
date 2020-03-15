@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint no-console: ["error", { allow: ["warn", "error"] }] */
 const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
@@ -6,7 +7,7 @@ const mqtt = require('mqtt/mqtt.js');
 
 helper.init(require.resolve('node-red'));
 
-describe('MQTT Broker Node', function () {
+describe('Aedes Broker TCP tests', function () {
   beforeEach(function (done) {
     helper.startServer(done);
   });
@@ -242,7 +243,7 @@ describe('MQTT Broker Node', function () {
     }];
     const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
     client.on('error', function (err) {
-      console.log('Error: ', err.toString());
+      console.error('Error: ', err.toString());
     });
     client.on('connect', function () {
       // console.log('External client connected');

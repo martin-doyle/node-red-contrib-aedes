@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* eslint no-console: ["error", { allow: ["warn", "error"] }] */
 const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
@@ -6,7 +7,7 @@ const mqtt = require('mqtt/mqtt.js');
 
 helper.init(require.resolve('node-red'));
 
-describe('MQTT Broker Node Websocket', function () {
+describe('Aedes Broker Websocket tests', function () {
   beforeEach(function (done) {
     helper.startServer(done);
   });
