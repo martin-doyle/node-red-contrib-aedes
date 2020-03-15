@@ -5,9 +5,9 @@ You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosq
 
 [![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)](https://travis-ci.org/martin-doyle/node-red-contrib-aedes)
 [![js-semistandard-style](https://img.shields.io/badge/code%20style-semistandard-brightgreen.svg?style=flat-square)](https://github.com/standard/semistandard)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/898bf62b040a4d999b150487e9cc837b)](https://www.codacy.com/manual/martin-doyle/node-red-contrib-aedes?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=martin-doyle/node-red-contrib-aedes&amp;utm_campaign=Badge_Grade)\
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/898bf62b040a4d999b150487e9cc837b)](https://www.codacy.com/manual/martin-doyle/node-red-contrib-aedes?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=martin-doyle/node-red-contrib-aedes&amp;utm_campaign=Badge_Grade)  
 [![Dependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes)
-[![devDependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes/dev-status.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes#info=devDependencies)\
+[![devDependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes/dev-status.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes#info=devDependencies)  
 [![Open Source Love](https://badges.frapsoft.com/os/mit/mit.svg?v=102)](https://github.com/ellerbrock/open-source-badge/)
 [![NPM version](https://img.shields.io/npm/v/node-red-contrib-aedes.svg?style=flat)](https://www.npmjs.com/node-red-contrib-aedes)
 
@@ -28,7 +28,7 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 - Standard TCP Support
 - WebSocket Support
 - SSL / TLS
-- Message Persistence (not yet tested)
+- Message Persistence (In-memory or MongoDB)
  
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
  
