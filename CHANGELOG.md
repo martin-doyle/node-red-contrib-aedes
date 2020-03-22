@@ -1,5 +1,10 @@
 # node-red-contrib-aeades Changelog
 
+## March 22, 2020, Version 0.3.2
+
+### Notable changes
+- Update aedes-persistence-mongodb to version 8
+
 ## March 10, 2020, Version 0.3.1
 
 ### Notable changes
