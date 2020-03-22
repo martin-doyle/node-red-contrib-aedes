@@ -3,7 +3,7 @@ MQTT Broker for Node-RED based on [Aedes](https://github.com/moscajs/aedes).
 
 You can use MQTT-in and MQTT-out nodes without an external MQTT broker like Mosquitto.
 
-[![Build Status](https://travis-ci.org/martin-doyle/node-red-contrib-aedes.svg?branch=master)](https://travis-ci.org/martin-doyle/node-red-contrib-aedes)
+![Node.js CI](https://github.com/martin-doyle/node-red-contrib-aedes/workflows/Node.js%20CI/badge.svg)
 [![js-semistandard-style](https://img.shields.io/badge/code%20style-semistandard-brightgreen.svg?style=flat-square)](https://github.com/standard/semistandard)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/898bf62b040a4d999b150487e9cc837b)](https://www.codacy.com/manual/martin-doyle/node-red-contrib-aedes?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=martin-doyle/node-red-contrib-aedes&amp;utm_campaign=Badge_Grade)  
 [![Dependency Status](https://david-dm.org/martin-doyle/node-red-contrib-aedes.svg)](https://david-dm.org/martin-doyle/node-red-contrib-aedes)
