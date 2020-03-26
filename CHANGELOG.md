@@ -1,5 +1,9 @@
 # node-red-contrib-aeades Changelog
 
+## March 26, 2020, Version 0.3.3
+
+### Fixes
+- Typing error on aedes.html (Reported in issue #17)
 ## March 22, 2020, Version 0.3.2
 
 ### Notable changes
