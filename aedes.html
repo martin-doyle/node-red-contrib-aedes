@@ -100,7 +100,7 @@
       key: {
         value: '',
         validate: function (v) {
-          var currentCert = $('#node-input-cert').val();
+          var currentCert = $('#node-nput-cert').val();
           if (currentCert === undefined) {
             currentCert = this.cert;
           }
@@ -172,7 +172,7 @@
           $(filenameInputId).val(filename);
           $(dataInputId).val(event.target.result);
         };
-        reader.readAsArrayBuffer(file);
+        reader.readAsText(file, 'UTF-8');
       }
       $('#node-input-usetls').on('click', function () {
         updateTLSOptions();

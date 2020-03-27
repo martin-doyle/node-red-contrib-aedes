@@ -262,8 +262,8 @@ module.exports = function (RED) {
     credentials: {
       username: { type: 'text' },
       password: { type: 'password' },
-      certdata: { type: 'buffer' },
-      keydata: { type: 'buffer' }
+      certdata: { type: 'text' },
+      keydata: { type: 'text' }
     }
   });
 };
