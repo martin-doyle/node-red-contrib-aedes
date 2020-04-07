@@ -3,7 +3,7 @@
   "version": "0.3.4",
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
-    "aedes": "^0.40.0",
+    "aedes": "^0.41.0",
     "aedes-persistence-mongodb": "^8.0.0",
     "websocket-stream": "^5.0.0"
   },
