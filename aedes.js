@@ -219,8 +219,7 @@ module.exports = function (RED) {
       node.send(msg);
     });
 
-    /*
-    broker.on('publish', function(packet,client) {
+    broker.on('publish', function (packet, client) {
       var msg = {
         topic: 'publish',
         payload: {
@@ -230,7 +229,6 @@ module.exports = function (RED) {
       };
       node.send(msg);
     });
-    */
 
     broker.on('closed', function () {
       node.debug('Closed event');
