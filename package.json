@@ -4,8 +4,8 @@
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
     "aedes": "^0.41.0",
-    "aedes-persistence-mongodb": "^8.0.0",
-    "websocket-stream": "^5.0.0"
+    "aedes-persistence-mongodb": "^8.0.1",
+    "websocket-stream": "^5.5.2"
   },
   "devDependencies": {
     "node-red-node-test-helper": "^0.2.0",
