@@ -64,8 +64,9 @@ describe('Aedes Broker Last Will tests', function () {
           // console.log('Payload: ' + msg.payload.client.will.payload.toString());
           should(msg.payload.client.will.topic).equal('testLastWill');
           should(msg.payload.client.will.payload.toString()).equal('last will');
-          client1.end();
-          done();
+          client1.end(function () {
+            done();
+          });
         }
       });
     });

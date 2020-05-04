@@ -88,9 +88,11 @@ describe('Aedes Broker retain tests', function () {
         // console.log(message.toString());
         should(topic.toString()).equal('test1883');
         should(message.toString()).equal('test');
-        client2.end();
-        client1.end();
-        done();
+        client2.end(function () {
+          client1.end(function () {
+            done();
+          });
+        });
       });
     });
   });
@@ -154,9 +156,11 @@ describe('Aedes Broker retain tests', function () {
         // console.log(message.toString());
         should(topic.toString()).equal('test1883');
         should(message.toString()).equal('test2');
-        client2.end();
-        client1.end();
-        done();
+        client2.end(function () {
+          client1.end(function () {
+            done();
+          });
+        });
       });
     });
   });

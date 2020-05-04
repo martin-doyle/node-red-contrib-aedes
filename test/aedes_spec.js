@@ -252,8 +252,9 @@ describe('Aedes Broker TCP tests', function () {
       const n2 = helper.getNode('n2');
       n2.on('input', function (msg) {
         msg.should.have.property('topic', 'clientReady');
-        client.end();
-        done();
+        client.end(function () {
+          done();
+        });
       });
     });
   });
@@ -311,8 +312,9 @@ describe('Aedes Broker TCP tests', function () {
       n5.on('input', function (msg) {
         // console.log(msg);
         msg.should.have.property('topic', 'test1883');
-        client.end();
-        done();
+        client.end(function () {
+          done();
+        });
       });
     });
   });
