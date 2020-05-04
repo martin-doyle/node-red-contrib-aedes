@@ -98,8 +98,9 @@ describe('Aedes Broker Websocket tests', function () {
       n5.on('input', function (msg) {
         // console.log(msg);
         msg.should.have.property('topic', 'test1883');
-        client.end();
-        done();
+        client.end(function () {
+          done();
+        });
       });
     });
   });
