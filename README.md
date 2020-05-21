@@ -1,7 +1,7 @@
 # node-red-contrib-aedes
 MQTT Broker for Node-RED based on [Aedes](https://github.com/moscajs/aedes).
 
-You can use the MQTT protocol in Node-Red without an external MQTT broker like Mosquitto.
+You can use the MQTT protocol in Node-RED without an external MQTT broker like Mosquitto.
 
 ![Node.js CI](https://github.com/martin-doyle/node-red-contrib-aedes/workflows/Node.js%20CI/badge.svg)
 [![js-semistandard-style](https://img.shields.io/badge/code%20style-semistandard-brightgreen.svg?style=flat-square)](https://github.com/standard/semistandard)
