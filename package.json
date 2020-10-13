@@ -1,15 +1,15 @@
 {
   "name": "node-red-contrib-aedes",
-  "version": "0.3.6",
+  "version": "0.3.7",
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
-    "aedes": "^0.42.0",
-    "aedes-persistence-mongodb": "^8.0.1",
+    "aedes": "^0.43.0",
+    "aedes-persistence-mongodb": "^8.1.2",
     "websocket-stream": "^5.5.2"
   },
   "devDependencies": {
-    "mqtt": "^4.0.1",
-    "node-red-node-test-helper": "^0.2.0"
+    "mqtt": "^4.2.1",
+    "node-red-node-test-helper": "^0.2.5"
   },
   "scripts": {
     "test": "semistandard --verbose | snazzy && mocha test/**/*_spec.js"
