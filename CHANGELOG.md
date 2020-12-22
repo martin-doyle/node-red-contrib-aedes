@@ -1,5 +1,10 @@
 # node-red-contrib-aedes Changelog
 
+## Dec, 22, 2020, Version 0.4.1
+### Notable changes
+- Dependency badge from David-DM removed
+- Dependabot added
+
 ## Oct, 29, 2020, Version 0.4.0
 ### Notable changes
 - Update Aedes to version 0.44

@@ -120,7 +120,7 @@ module.exports = function (RED) {
 
     if (this.credentials && this.username && this.password) {
       const authenticate = function (client, username, password, callback) {
-        var authorized = (username === node.username && password.toString() === node.password);
+        const authorized = (username === node.username && password.toString() === node.password);
         if (authorized) { client.user = username; }
         callback(null, authorized);
       };
