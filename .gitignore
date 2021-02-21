@@ -105,3 +105,9 @@ dist
 
 #JetBrains directory
 .idea
+/test/secure/
+/test/aedes_secure_spec.js
+/secure/
+
+# package-lock.json
+package-lock.json

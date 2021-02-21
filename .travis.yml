@@ -1,5 +1,7 @@
 sudo: false
 language: node_js
+cache:
+  npm: false
 env:
   - CXX=g++-4.8
 addons:
@@ -9,10 +11,12 @@ addons:
     packages:
       - g++-4.8
 services:
-  - mongodb      
+  - mongodb
 node_js:
   - "12"
 before_script:
   - npm install -g node-red
   - npm link node-red
   - npm install -g mocha
+  - npm install -g semistandard
+  - npm install -g snazzy

@@ -1,0 +1,31 @@
+{
+  "aedes-mqtt-broker": {
+    "status": {
+      "connected": "connected __count__",
+      "connected_plural": "connected __count__"
+    },
+    "label": {
+      "mqtt_port": "MQTT port",
+      "mqtt_ws_port": "WS port",
+      "use-tls": "Enable secure (SSL/TLS) connection",
+      "tls-config": "TLS Configuration",
+      "upload": "Upload",
+      "cert": "Certificate",
+      "key": "Private Key",
+      "dburl": "DB Url"
+    },
+    "placeholder": {
+      "mqtt_port": "Enter MQTT port",
+      "mqtt_ws_port": "Enter Websocket port. Leave blank to disable Websocket support",
+      "cert": "path to certificate (PEM format)",
+      "key": "path to private key (PEM format)",
+      "dburl": "mongodb://localhost:27017/mqtt",
+      "username": "leave blank to disable authentication",
+      "password": "leave blank to disable authentication"
+    },
+    "tabs-label": {
+      "connection": "Connection",
+      "security": "Security"
+    }
+  }
+}

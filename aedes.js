@@ -19,15 +19,32 @@ module.exports = function (RED) {
   const mongoPersistence = require('aedes-persistence-mongodb');
   const aedes = require('aedes');
   const net = require('net');
+  const tls = require('tls');
+  const http = require('http');
+  const https = require('https');
   const ws = require('websocket-stream');
 
-  function AedesBrokerNode(config) {
+  function AedesBrokerNode (config) {
     RED.nodes.createNode(this, config);
-    this.mqtt_port = parseInt(config.mqtt_port);
-    this.mqtt_ws_port = parseInt(config.mqtt_ws_port);
-    var node = this;
+    this.mqtt_port = parseInt(config.mqtt_port, 10);
+    this.mqtt_ws_port = parseInt(config.mqtt_ws_port, 10);
+    this.usetls = config.usetls;
 
-    var aedesSettings = {};
+    if (this.credentials) {
+      this.username = this.credentials.username;
+      this.password = this.credentials.password;
+      this.cert = this.credentials.certdata || '';
+      this.key = this.credentials.keydata || '';
+    }
+
+    if (typeof this.usetls === 'undefined') {
+      this.usetls = false;
+    }
+
+    const node = this;
+
+    const aedesSettings = {};
+    const serverOptions = {};
 
     if (config.dburl) {
       aedesSettings.persistence = mongoPersistence({
@@ -36,10 +53,21 @@ module.exports = function (RED) {
       node.log('Start persistence to MongeDB');
     }
 
+    if ((this.cert) && (this.key) && (this.usetls)) {
+      serverOptions.cert = this.cert;
+      serverOptions.key = this.key;
+    }
+
     const broker = new aedes.Server(aedesSettings);
-    const server = net.createServer(broker.handle);
+    let server;
+    if (this.usetls) {
+      server = tls.createServer(serverOptions, broker.handle);
+    } else {
+      server = net.createServer(broker.handle);
+    }
 
     let wss = null;
+    let httpServer = null;
 
     if (this.mqtt_ws_port) {
       // Awkward check since http or ws do not fire an error event in case the port is in use
@@ -56,41 +84,52 @@ module.exports = function (RED) {
       });
 
       testServer.once('close', function () {
+        if (node.usetls) {
+          httpServer = https.createServer(serverOptions);
+        } else {
+          httpServer = http.createServer();
+        }
         wss = ws.createServer({
-          port: config.mqtt_ws_port
+          server: httpServer
         }, broker.handle);
-        node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+        httpServer.listen(config.mqtt_ws_port, function () {
+          node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+        });
       });
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
       });
-
     }
 
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error('Error: Port ' + config.mqtt_port + ' is already in use');
+        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
+      } else {
+        node.error('Error: Port ' + config.mqtt_port + ' ' + err.toString());
+        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
       }
     });
 
     if (this.mqtt_port) {
       server.listen(this.mqtt_port, function () {
         node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
+        node.status({ fill: 'green', shape: 'dot', text: 'node-red:common.status.connected' });
       });
     }
 
-    if (config.credentials.username && config.credentials.password) {
-      var authenticate = function (client, username, password, callback) {
-        var authorized = (username == config.credentials.username && password == config.credentials.password);
-        if (authorized) client.user = username;
+    if (this.credentials && this.username && this.password) {
+      const authenticate = function (client, username, password, callback) {
+        const authorized = (username === node.username && password.toString() === node.password);
+        if (authorized) { client.user = username; }
         callback(null, authorized);
       };
 
-      broker.authenticate = authenticate
+      broker.authenticate = authenticate;
     }
 
     broker.on('client', function (client) {
-      var msg = {
+      const msg = {
         topic: 'client',
         payload: {
           client: client
@@ -100,27 +139,29 @@ module.exports = function (RED) {
     });
 
     broker.on('clientReady', function (client) {
-      var msg = {
+      const msg = {
         topic: 'clientReady',
         payload: {
           client: client
         }
       };
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
       node.send(msg);
     });
 
     broker.on('clientDisconnect', function (client) {
-      var msg = {
+      const msg = {
         topic: 'clientDisconnect',
         payload: {
           client: client
         }
       };
       node.send(msg);
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('clientError', function (client, err) {
-      var msg = {
+      const msg = {
         topic: 'clientError',
         payload: {
           client: client,
@@ -128,10 +169,11 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('connectionError', function (client, err) {
-      var msg = {
+      const msg = {
         topic: 'connectionError',
         payload: {
           client: client,
@@ -139,20 +181,22 @@ module.exports = function (RED) {
         }
       };
       node.send(msg);
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('keepaliveTimeout', function (client) {
-      var msg = {
+      const msg = {
         topic: 'keepaliveTimeout',
         payload: {
           client: client
         }
       };
       node.send(msg);
+      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
     broker.on('subscribe', function (subscription, client) {
-      var msg = {
+      const msg = {
         topic: 'subscribe',
         payload: {
           topic: subscription.topic,
@@ -164,7 +208,7 @@ module.exports = function (RED) {
     });
 
     broker.on('unsubscribe', function (subscription, client) {
-      var msg = {
+      const msg = {
         topic: 'unsubscribe',
         payload: {
           topic: subscription.topic,
@@ -176,7 +220,7 @@ module.exports = function (RED) {
     });
 
     /*
-    broker.on('publish', function(packet,client) {
+    broker.on('publish', function (packet, client) {
       var msg = {
         topic: 'publish',
         payload: {
@@ -186,22 +230,25 @@ module.exports = function (RED) {
       };
       node.send(msg);
     });
-    */
+     */
 
     broker.on('closed', function () {
-      node.log('Closed event');
+      node.debug('Closed event');
     });
 
     this.on('close', function (done) {
       broker.close(function () {
-        node.log('Unbinding aedes mqtt server from port: ' + this.mqtt_port);
+        node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
         server.close(function () {
           node.debug('after server.close(): ');
           if (wss) {
-            node.log('Unbinding aedes mqtt server from ws port: ' + this.mqtt_ws_port);
+            node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
             wss.close(function () {
               node.debug('after wss.close(): ');
-              done();
+              httpServer.close(function () {
+                node.debug('after httpServer.close(): ');
+                done();
+              });
             });
           } else {
             done();
@@ -212,9 +259,11 @@ module.exports = function (RED) {
   }
 
   RED.nodes.registerType('aedes broker', AedesBrokerNode, {
-     credentials: {
-         username: {type:"text"},
-         password: {type:"password"}
-     }
+    credentials: {
+      username: { type: 'text' },
+      password: { type: 'password' },
+      certdata: { type: 'text' },
+      keydata: { type: 'text' }
+    }
   });
 };
