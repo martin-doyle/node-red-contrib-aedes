@@ -1,6 +1,6 @@
 {
   "name": "node-red-contrib-aedes",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
     "aedes": "^0.44.2",
@@ -40,6 +40,10 @@
     {
       "name": "Jochen Scheib",
       "email": "webmaster@mapero.de"
+    },
+    {
+      "name": "Ori Novanda",
+      "email": "cargmax@gmail.com"
     }
   ],
   "license": "MIT",

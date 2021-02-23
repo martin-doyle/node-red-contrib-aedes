@@ -29,6 +29,17 @@
                 <input type="text" id="node-input-mqtt_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_port">
             </div>
             <div class="form-row">
+                <label for="node-input-mqtt_ws_bind"><i class="fa fa-globe"></i> WS bind</label>
+                <select id="node-input-mqtt_ws_bind" type="text" style="width:30%" text-center>
+                <option value="path" default>path</option>
+                <option value="port">port</option>
+                </select>
+            </div>
+            <div class="form-row" id="node-input-mqtt_ws_path-label">
+                <label for="node-input-mqtt_ws_path"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_ws_path"></label>
+                <input type="text" id="node-input-mqtt_ws_path" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_path">
+            </div>
+            <div class="form-row" id="node-input-mqtt_ws_port-label">
                 <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.mqtt_ws_port"></label>
                 <input type="text" id="node-input-mqtt_ws_port" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_port">
             </div>
@@ -86,7 +97,9 @@
     defaults: {
       name: { value: '' },
       mqtt_port: { value: 1883, validate: RED.validators.number() },
+      mqtt_ws_bind: { value: 'path', required: true},
       mqtt_ws_port: { value: null, required: false, validate: RED.validators.number(true) },
+      mqtt_ws_path: { value: '', required: false},
       cert: {
         value: '',
         validate: function (v) {
@@ -147,6 +160,24 @@
       setTimeout(function () {
         tabs.resize();
       }, 0);
+      $('#node-input-mqtt_ws_bind').on('change', function(){
+        var wsPathLabel = $('#node-input-mqtt_ws_path-label');
+        var wsPortLabel = $('#node-input-mqtt_ws_port-label');
+        switch($(this).val()){
+          case "path":
+            wsPathLabel.show();
+            wsPortLabel.hide();
+            break;
+          case "port":
+            wsPathLabel.hide();
+            wsPortLabel.show();
+            break;
+          default:
+            wsPathLabel.show();
+            wsPortLabel.show();
+            break;
+        }
+      });
       if (typeof this.usetls === 'undefined') {
         this.usetls = false;
         $('#node-input-usetls').prop('checked', false);
