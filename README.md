@@ -32,6 +32,13 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
  
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
  
+## Server without public IP or behind firewall
+If the only way to access your server is through http/https protocol, the MQTT broker node can be accessible by public clients through WebSocket.
+
+When your NodeRED server address is `https://yourserver/`, you can set the WebSocket to bind to, e.g., `"/ws/mqtt"` path, to have `wss://yourserver/ws/mqtt` WebSocket at port `443`.
+
+You can also bind the WebSocket to the root `"/"` path and having `wss://yourserver/` WebSocket listening at port `443` (or `ws://yourserver/` at port `80`).
+
 ## License
  
  Licensed under [MIT](./LICENSE).
