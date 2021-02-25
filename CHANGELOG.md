@@ -1,6 +1,6 @@
 # node-red-contrib-aedes Changelog
 
-## Feb 25, 2032, Version 0.5.0
+## Feb 25, 2021, Version 0.5.0
 ### Notable changes
 - Add mqtt over websocket path (Thanks Ori Novanda)
 
