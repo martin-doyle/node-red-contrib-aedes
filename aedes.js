@@ -24,11 +24,31 @@ module.exports = function (RED) {
   const https = require('https');
   const ws = require('websocket-stream');
 
+  let serverUpgradeAdded = false;
+  const listenerNodes = {};
+
+  function handleServerUpgrade (request, socket, head) {
+    const pathname = new URL(request.url, 'http://example.org').pathname;
+    if (Object.prototype.hasOwnProperty.call(listenerNodes, pathname)) {
+      listenerNodes[pathname].server.handleUpgrade(request, socket, head, function done (conn) {
+        listenerNodes[pathname].server.emit('connection', conn, request);
+      });
+    }
+  }
+
   function AedesBrokerNode (config) {
     RED.nodes.createNode(this, config);
     this.mqtt_port = parseInt(config.mqtt_port, 10);
     this.mqtt_ws_port = parseInt(config.mqtt_ws_port, 10);
+    this.mqtt_ws_path = '' + config.mqtt_ws_path;
+    this.mqtt_ws_bind = config.mqtt_ws_bind;
     this.usetls = config.usetls;
+
+    if (this.mqtt_ws_bind === 'path') {
+      this.mqtt_ws_port = 0;
+    } else {
+      this.mqtt_ws_path = '';
+    }
 
     if (this.credentials) {
       this.username = this.credentials.username;
@@ -99,6 +119,35 @@ module.exports = function (RED) {
       testServer.listen(config.mqtt_ws_port, function () {
         node.log('Checking ws port: ' + config.mqtt_ws_port);
       });
+    }
+
+    if (this.mqtt_ws_path !== '') {
+      if (!serverUpgradeAdded) {
+        RED.server.on('upgrade', handleServerUpgrade);
+        serverUpgradeAdded = true;
+      }
+
+      let path = RED.settings.httpNodeRoot || '/';
+      path = path + (path.slice(-1) === '/' ? '' : '/') + (node.mqtt_ws_path.charAt(0) === '/' ? node.mqtt_ws_path.substring(1) : node.mqtt_ws_path);
+      node.fullPath = path;
+
+      if (Object.prototype.hasOwnProperty.call(listenerNodes, path)) {
+        node.error(RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path }));
+        return;
+      }
+      listenerNodes[node.fullPath] = node;
+      const serverOptions_ = {
+        noServer: true
+      };
+      if (RED.settings.webSocketNodeVerifyClient) {
+        serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
+      }
+
+      node.server = ws.createServer({
+        noServer: true
+      }, broker.handle);
+
+      node.log('Binding aedes mqtt server on ws path: ' + node.fullPath);
     }
 
     server.once('error', function (err) {
@@ -241,6 +290,11 @@ module.exports = function (RED) {
         node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
         server.close(function () {
           node.debug('after server.close(): ');
+          if (node.mqtt_ws_path !== '') {
+            node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
+            delete listenerNodes[node.fullPath];
+            node.server.close();
+          }
           if (wss) {
             node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
             wss.close(function () {

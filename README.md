@@ -26,11 +26,18 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 
 ## Features
 - Standard TCP Support
-- WebSocket Support
+- WebSocket Support via port or path
 - SSL / TLS
 - Message Persistence (In-memory or MongoDB)
  
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
+
+## Server without public IP or behind firewall
+If your server is behind a firewall or you cannot open any ports other than the standard http/https ports, the MQTT broker node can be accessible by public clients through a WebSocket path.
+
+When your Node-RED server address is `https://yourserver/`, you can set the WebSocket to bind to, e.g., `"/ws/mqtt"` path, to have `wss://yourserver/ws/mqtt` WebSocket at port `443`.
+
+You can also bind the WebSocket to the root `"/"` path and having `wss://yourserver/` WebSocket listening at port `443` (or `ws://yourserver/` at port `80`).
  
 ## License
  
