@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
+/* eslint no-console: ["error", { allow: ["warn", "error"] }] */
 const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
@@ -149,7 +149,7 @@ describe('Aedes Broker Websocket tests', function () {
         console.error('Client on error: ', err.toString());
       });
       client.on('connect', function () {
-        console.log('External client connected');
+        // console.log('External client connected');
       });
       const n2 = helper.getNode('n2');
       const n5 = helper.getNode('n5');
