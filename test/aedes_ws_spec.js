@@ -105,7 +105,6 @@ describe('Aedes Broker Websocket tests', function () {
     });
   });
 
-  /*
   it('a subscriber should receive a message from an external publisher via ws path', function (done) {
     this.timeout(10000); // have to wait for the inject with delay of 10 seconds
     const flow = [
@@ -113,6 +112,7 @@ describe('Aedes Broker Websocket tests', function () {
         id: 'n1',
         type: 'aedes broker',
         mqtt_port: '1883',
+        mqtt_ws_bind: 'path',
         mqtt_ws_path: '/mqtt',
         name: 'Aedes 1883',
         wires: [
@@ -145,7 +145,6 @@ describe('Aedes Broker Websocket tests', function () {
 
     helper.load([aedesNode, mqttNode], flow, function () {
       const client = mqtt.connect(helper.url().replace(/http/, 'ws') + '/mqtt', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-      console.log(helper.url().replace('http', 'ws') + '/mqtt');
       client.on('error', function (err) {
         console.error('Client on error: ', err.toString());
       });
@@ -160,7 +159,7 @@ describe('Aedes Broker Websocket tests', function () {
         }
       });
       n5.on('input', function (msg) {
-        console.log(msg);
+        // console.log(msg);
         msg.should.have.property('topic', 'test1883');
         client.end(function () {
           done();
@@ -168,5 +167,4 @@ describe('Aedes Broker Websocket tests', function () {
       });
     });
   });
-   */
 });
