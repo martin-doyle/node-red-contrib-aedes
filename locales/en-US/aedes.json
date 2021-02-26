@@ -7,6 +7,7 @@
     "label": {
       "mqtt_port": "MQTT port",
       "mqtt_ws_port": "WS port",
+      "mqtt_ws_path": "WS path",
       "use-tls": "Enable secure (SSL/TLS) connection",
       "tls-config": "TLS Configuration",
       "upload": "Upload",
@@ -17,6 +18,7 @@
     "placeholder": {
       "mqtt_port": "Enter MQTT port",
       "mqtt_ws_port": "Enter Websocket port. Leave blank to disable Websocket support",
+      "mqtt_ws_path": "Enter Websocket path. Leave blank to disable Websocket support",
       "cert": "path to certificate (PEM format)",
       "key": "path to private key (PEM format)",
       "dburl": "mongodb://localhost:27017/mqtt",

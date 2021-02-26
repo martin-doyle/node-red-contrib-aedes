@@ -1,9 +1,13 @@
 # node-red-contrib-aedes Changelog
 
+## Feb 25, 2021, Version 0.5.0
+### Notable changes
+- Add mqtt over websocket path (Thanks Ori Novanda)
+
 ## Feb, 21, 2021, Version 0.4.2
 ### Notable changes
 - Update aedes to version 0.44.2
-- Dependency badge from David-DM removed
+- Dependency badge from David-DM added again
 
 ## Dec, 22, 2020, Version 0.4.1
 ### Notable changes
