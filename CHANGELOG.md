@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Mar 08, 2021, Version 0.5.1
+### Notable changes
+- Update aedes to version 0.45
+
 ## Feb 25, 2021, Version 0.5.0
 ### Notable changes
 - Add mqtt over websocket path (Thanks Ori Novanda)
