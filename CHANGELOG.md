@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Apr 23, 2021, Version 0.5.2
+### Notable changes
+- Update aedes to version 0.46
+
 ## Mar 08, 2021, Version 0.5.1
 ### Notable changes
 - Update aedes to version 0.45
