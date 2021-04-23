@@ -67,7 +67,8 @@ describe('Aedes Broker TCP tests', function () {
         msg.should.have.property('topic', 'clientReady');
         done();
       });
-    });
+    }
+    );
   });
 
   it('a subscriber should receive a message from a publisher', function (done) {
@@ -241,14 +242,14 @@ describe('Aedes Broker TCP tests', function () {
       id: 'n2',
       type: 'helper'
     }];
-    const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-    client.on('error', function (err) {
-      console.error('Error: ', err.toString());
-    });
-    client.on('connect', function () {
-      // console.log('External client connected');
-    });
     helper.load(aedesNode, flow, function () {
+      const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+      client.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+      client.on('connect', function () {
+        // console.log('External client connected');
+      });
       const n2 = helper.getNode('n2');
       n2.on('input', function (msg) {
         msg.should.have.property('topic', 'clientReady');
@@ -294,14 +295,14 @@ describe('Aedes Broker TCP tests', function () {
         port: '1883'
       }
     ];
-    const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-    client.on('error', function (err) {
-      console.error('Error: ', err.toString());
-    });
-    client.on('connect', function () {
-      // console.log('External client connected');
-    });
     helper.load([aedesNode, mqttNode], flow, function () {
+      const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+      client.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+      client.on('connect', function () {
+        // console.log('External client connected');
+      });
       const n2 = helper.getNode('n2');
       const n5 = helper.getNode('n5');
       n2.on('input', function (msg) {
