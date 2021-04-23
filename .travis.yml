@@ -15,7 +15,7 @@ services:
 node_js:
   - "12"
 before_script:
-  - npm install -g node-red
+  - npm install -g node-red@1.2.9
   - npm link node-red
   - npm install -g mocha
   - npm install -g semistandard
