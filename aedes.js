@@ -285,7 +285,7 @@ module.exports = function (RED) {
       node.debug('Closed event');
     });
 
-    this.on('close', function (done) {
+    broker.on('close', function (done) {
       broker.close(function () {
         node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
         server.close(function () {
@@ -309,6 +309,32 @@ module.exports = function (RED) {
           }
         });
       });
+    });
+    
+    this.on('close', function () {
+      if (broker.connectedClients < 1) {
+        broker.emit('close', function() {
+          node.debug('after broker.close(): ');
+        });
+      } else {
+        let forceShutdownTimer = setTimeout(function () {
+          if (forceShutdownTimer) {
+            forceShutdownTimer = null;
+            broker.emit('close', function() {
+              node.debug('after broker.close(): ');
+            });
+          }
+        }, 1000); // timeout in mills
+        broker.on('clientDisconnect', function () {
+          if (broker.connectedClients < 1 && forceShutdownTimer) {
+            clearTimeout(forceShutdownTimer);
+            forceShutdownTimer = null;
+            broker.emit('close', function() {
+              node.debug('after broker.close(): ');
+            });
+          }
+        });
+      }
     });
   }
 

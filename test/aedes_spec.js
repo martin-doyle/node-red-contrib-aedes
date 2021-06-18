@@ -321,3 +321,47 @@ describe('Aedes Broker TCP tests', function () {
     });
   });
 });
+
+describe('Aedes Broker Timeout tests', function () {
+  beforeEach(function (done) {
+    helper.startServer(done);
+  });
+
+  it('should close after 1 second when an external mqtt client is still connected', function (done) {
+    this.timeout(10000); // have to wait for the inject with delay of 10 seconds
+    const flow = [{
+      id: 'n1',
+      type: 'aedes broker',
+      mqtt_port: '1883',
+      name: 'Aedes 1883',
+      wires: [
+        ['n2']
+      ]
+    },
+    {
+      id: 'n2',
+      type: 'helper'
+    }];
+    helper.load(aedesNode, flow, function () {
+      const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+      client.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+      client.on('connect', function () {
+        // console.log('External client connected');
+      });
+      client.on('close', function () {
+        // console.log('External client closed');
+        client.end(function () {
+          helper.stopServer(done);
+        });
+      });
+
+      const n2 = helper.getNode('n2');
+      n2.on('input', function (msg) {
+        msg.should.have.property('topic', 'clientReady');
+        helper.unload();
+      });
+    });
+  });
+});
