@@ -48,41 +48,33 @@ describe('Aedes Broker retain tests', function () {
         type: 'helper'
       }
     ];
-    const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-    const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2' });
-    client1.on('error', function (err) {
-      console.error('Error: ', err.toString());
-    });
-    client1.on('connect', function () {
-      // console.log('External client1 connected');
-      client1.publish('test1883', 'test', { retain: true }, function () {
-        // console.log('Published  test');
-        client2.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
-        client2.on('connect', function () {
-          // console.log('External client2 connected');
-          setTimeout(function () {
-            client2.subscribe('test1883', function (err, granted) {
-              // console.log('Subscription successful ' + JSON.stringify(granted));
-              if (err) {
-                console.error('Error subscribing');
-                done();
-              }
-            });
-          }, 1000);
+    helper.load([aedesNode, mqttNode], flow, function () {
+      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+      client1.on('error', function (err) {
+        console.error('Error (client1): ', err.toString());
+      });
+      client1.on('connect', function () {
+        // console.log('External client1 connected');
+        client1.publish('test1883', 'test', { retain: true }, function () {
+          // console.log('Published  test');
         });
       });
-    });
-    helper.load([aedesNode, mqttNode], flow, function () {
-      const n2 = helper.getNode('n2');
-      n2.on('input', function (msg) {
-        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
-        if (msg.topic === 'subscribe') {
-          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
-        } else if (msg.topic === 'clientReady') {
-          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
-        }
+  
+      const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2' });
+      client2.on('error', function (err) {
+        console.error('Error (client2): ', err.toString());
+      });
+      client2.on('connect', function () {
+        // console.log('External client2 connected');
+        setTimeout(function () {
+          client2.subscribe('test1883', function (err, granted) {
+            // console.log('Subscription successful ' + JSON.stringify(granted));
+            if (err) {
+              console.error('Error subscribing');
+              done();
+            }
+          });
+        }, 1000);
       });
       client2.on('message', function (topic, message) {
         // console.log(message.toString());
@@ -93,6 +85,16 @@ describe('Aedes Broker retain tests', function () {
             done();
           });
         });
+      });
+
+      const n2 = helper.getNode('n2');
+      n2.on('input', function (msg) {
+        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+        if (msg.topic === 'subscribe') {
+          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+        } else if (msg.topic === 'clientReady') {
+          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
+        }
       });
     });
   });
@@ -113,44 +115,36 @@ describe('Aedes Broker retain tests', function () {
         type: 'helper'
       }
     ];
-    const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-    const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2' });
-    client1.on('error', function (err) {
-      console.error('Error: ', err.toString());
-    });
-    client1.on('connect', function () {
-      // console.log('External client1 connected');
-      client1.publish('test1883', 'test1', { retain: true }, function () {
-        // console.log('Published  test1');
-        client1.publish('test1883', 'test2', { retain: true }, function () {
-          // console.log('Published  test2');
-          client2.on('error', function (err) {
-            console.error('Error: ', err.toString());
-          });
-          client2.on('connect', function () {
-            // console.log('External client2 connected');
-            setTimeout(function () {
-              client2.subscribe('test1883', function (err, granted) {
-                // console.log('Subscription successful ' + JSON.stringify(granted));
-                if (err) {
-                  console.error('Error subscribing');
-                  done();
-                }
-              });
-            }, 1000);
+    helper.load([aedesNode, mqttNode], flow, function () {
+      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+      client1.on('error', function (err) {
+        console.error('Error (client1): ', err.toString());
+      });
+      client1.on('connect', function () {
+        // console.log('External client1 connected');
+        client1.publish('test1883', 'test1', { retain: true }, function () {
+          // console.log('Published  test1');
+          client1.publish('test1883', 'test2', { retain: true }, function () {
+            // console.log('Published  test2');
           });
         });
       });
-    });
-    helper.load([aedesNode, mqttNode], flow, function () {
-      const n2 = helper.getNode('n2');
-      n2.on('input', function (msg) {
-        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
-        if (msg.topic === 'subscribe') {
-          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
-        } else if (msg.topic === 'clientReady') {
-          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
-        }
+
+      const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2' });
+      client2.on('error', function (err) {
+        console.error('Error (client2): ', err.toString());
+      });
+      client2.on('connect', function () {
+        // console.log('External client2 connected');
+        setTimeout(function () {
+          client2.subscribe('test1883', function (err, granted) {
+            // console.log('Subscription successful ' + JSON.stringify(granted));
+            if (err) {
+              console.error('Error subscribing');
+              done();
+            }
+          });
+        }, 1000);
       });
       client2.on('message', function (topic, message) {
         // console.log(message.toString());
@@ -161,6 +155,16 @@ describe('Aedes Broker retain tests', function () {
             done();
           });
         });
+      });
+
+      const n2 = helper.getNode('n2');
+      n2.on('input', function (msg) {
+        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+        if (msg.topic === 'subscribe') {
+          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+        } else if (msg.topic === 'clientReady') {
+          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
+        }
       });
     });
   });
