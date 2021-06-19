@@ -83,7 +83,7 @@ module.exports = function (RED) {
     let wss = null;
     let httpServer = null;
 
-    function startServer() {
+    function startServer () {
       if (broker.closed) {
         return;
       }
@@ -92,7 +92,7 @@ module.exports = function (RED) {
       } else {
         server = net.createServer(broker.handle);
       }
-  
+
       if (node.mqtt_ws_port) {
         // Awkward check since http or ws do not fire an error event in case the port is in use
         const testServer = net.createServer();
@@ -106,7 +106,7 @@ module.exports = function (RED) {
         testServer.once('listening', function () {
           testServer.close();
         });
-  
+
         testServer.once('close', function () {
           if (node.usetls) {
             httpServer = https.createServer(serverOptions);
@@ -124,17 +124,17 @@ module.exports = function (RED) {
           node.log('Checking ws port: ' + config.mqtt_ws_port);
         });
       }
-  
+
       if (node.mqtt_ws_path !== '') {
         if (!serverUpgradeAdded) {
           RED.server.on('upgrade', handleServerUpgrade);
           serverUpgradeAdded = true;
         }
-  
+
         let path = RED.settings.httpNodeRoot || '/';
         path = path + (path.slice(-1) === '/' ? '' : '/') + (node.mqtt_ws_path.charAt(0) === '/' ? node.mqtt_ws_path.substring(1) : node.mqtt_ws_path);
         node.fullPath = path;
-  
+
         if (Object.prototype.hasOwnProperty.call(listenerNodes, path)) {
           node.error(RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path }));
           return;
@@ -146,14 +146,14 @@ module.exports = function (RED) {
         if (RED.settings.webSocketNodeVerifyClient) {
           serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
         }
-  
+
         node.server = ws.createServer({
           noServer: true
         }, broker.handle);
-  
+
         node.log('Binding aedes mqtt server on ws path: ' + node.fullPath);
       }
-  
+
       server.once('error', function (err) {
         if (err.code === 'EADDRINUSE') {
           node.error('Error: Port ' + config.mqtt_port + ' is already in use');
@@ -164,7 +164,7 @@ module.exports = function (RED) {
           node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
         }
       });
-  
+
       if (node.mqtt_port) {
         server.listen(node.mqtt_port, function () {
           node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
@@ -317,17 +317,17 @@ module.exports = function (RED) {
         });
       });
     });
-    
+
     this.on('close', function () {
       if (broker.connectedClients < 1) {
-        broker.emit('close', function() {
+        broker.emit('close', function () {
           node.debug('after broker.close(): ');
         });
       } else {
         let forceShutdownTimer = setTimeout(function () {
           if (forceShutdownTimer) {
             forceShutdownTimer = null;
-            broker.emit('close', function() {
+            broker.emit('close', function () {
               node.debug('after broker.close(): ');
             });
           }
@@ -336,7 +336,7 @@ module.exports = function (RED) {
           if (broker.connectedClients < 1 && forceShutdownTimer) {
             clearTimeout(forceShutdownTimer);
             forceShutdownTimer = null;
-            broker.emit('close', function() {
+            broker.emit('close', function () {
               node.debug('after broker.close(): ');
             });
           }

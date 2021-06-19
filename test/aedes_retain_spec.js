@@ -59,7 +59,7 @@ describe('Aedes Broker retain tests', function () {
           // console.log('Published  test');
         });
       });
-  
+
       const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2' });
       client2.on('error', function (err) {
         console.error('Error (client2): ', err.toString());
