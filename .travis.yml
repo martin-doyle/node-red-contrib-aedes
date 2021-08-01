@@ -14,6 +14,7 @@ services:
   - mongodb
 node_js:
   - "12"
+  - "14"
 before_script:
   - npm install -g node-red
   - npm link node-red
