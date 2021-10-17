@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Oct 17, 2021, Version 0.6
+### Notable changes
+- Add output node for publish events
+
 ## Apr 23, 2021, Version 0.5.2
 ### Notable changes
 - Update aedes to version 0.46

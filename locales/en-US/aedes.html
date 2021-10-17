@@ -2,10 +2,13 @@
     <p>MQTT broker based on Barebone MQTT broker Aedes. You can use MQTT-in and MQTT-out nodes without an external broker like Mosquitto.</p>
     <h3>Outputs</h3>
         <dl class="message-properties">
-            <dt>payload <span class="property-type">object</span></dt>
-            <dd>the content of the events from the broker.</dd>
             <dt>topic <span class="property-type">string</span></dt>
             <dd>the topic of the event.</dd>
+            <dt>payload 1<span class="property-type">object</span></dt>
+            <dd>the content of all events from the broker except publish.</dd>
+            <dt>payload 2<span class="property-type">object</span></dt>
+            <dd>the content of the publish events from the broker.</dd>
+
         </dl>
     <h3>Details</h3>
     <h3>References</h3>
