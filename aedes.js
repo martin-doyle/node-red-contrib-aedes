@@ -268,16 +268,19 @@ module.exports = function (RED) {
       node.send([msg, null]);
     });
 
-    broker.on('publish', function (packet, client) {
-      const msg = {
-        topic: 'publish',
-        payload: {
-          packet: packet,
-          client: client
-        }
-      };
-      node.send([null, msg]);
-    });
+    if (this.wires[1] && this.wires[1].length > 0) {
+      node.log('Publish output wired. Enable broker publish event messages.');
+      broker.on('publish', function (packet, client) {
+        const msg = {
+          topic: 'publish',
+          payload: {
+            packet: packet,
+            client: client
+          }
+        };
+        node.send([null, msg]);
+      });
+    }
 
     broker.on('closed', function () {
       node.debug('Closed event');

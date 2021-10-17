@@ -23,7 +23,10 @@ describe('Aedes Broker retain tests', function () {
       id: 'n1',
       type: 'aedes broker',
       mqtt_port: '1883',
-      name: 'Aedes 1883'
+      name: 'Aedes 1883',
+      wires: [
+        [], []
+      ]
     }];
     helper.load(aedesNode, flow, function () {
       const n1 = helper.getNode('n1');
@@ -40,7 +43,7 @@ describe('Aedes Broker retain tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
@@ -104,7 +107,7 @@ describe('Aedes Broker retain tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
