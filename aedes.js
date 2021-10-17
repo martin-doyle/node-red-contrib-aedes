@@ -184,7 +184,7 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
     });
 
     broker.on('clientReady', function (client) {
@@ -195,7 +195,7 @@ module.exports = function (RED) {
         }
       };
       node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
-      node.send(msg);
+      node.send([msg, null]);
     });
 
     broker.on('clientDisconnect', function (client) {
@@ -205,7 +205,7 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
       node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
@@ -217,7 +217,7 @@ module.exports = function (RED) {
           err: err
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
       node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
@@ -229,7 +229,7 @@ module.exports = function (RED) {
           err: err
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
       node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
@@ -240,7 +240,7 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
       node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
     });
 
@@ -253,7 +253,7 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
     });
 
     broker.on('unsubscribe', function (subscription, client) {
@@ -265,21 +265,19 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.send(msg);
+      node.send([msg, null]);
     });
 
-    /*
     broker.on('publish', function (packet, client) {
-      var msg = {
+      const msg = {
         topic: 'publish',
         payload: {
           packet: packet,
           client: client
         }
       };
-      node.send(msg);
+      node.send([null, msg]);
     });
-     */
 
     broker.on('closed', function () {
       node.debug('Closed event');

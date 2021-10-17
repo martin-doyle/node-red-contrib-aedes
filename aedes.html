@@ -133,7 +133,7 @@
     },
     color: '#d8bfd8',
     inputs: 0,
-    outputs: 1,
+    outputs: 2,
     icon: 'aedes.png',
     label: function () {
       return this.name || 'Aedes MQTT broker';
@@ -141,6 +141,7 @@
     labelStyle: function () {
       return this.name ? 'node_label_italic' : '';
     },
+    outputLabels: ["events","publish"],
     oneditprepare: function () {
       var tabs = RED.tabs.create({
         id: 'node-config-aedes-broker-tabs',
