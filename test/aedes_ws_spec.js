@@ -26,13 +26,19 @@ describe('Aedes Broker Websocket tests', function () {
         type: 'aedes broker',
         mqtt_port: '1883',
         name: 'Aedes 1883',
-        mqtt_ws_port: '8080'
+        mqtt_ws_port: '8080',
+        wires: [
+          [], []
+        ]
       }, {
         id: 'n11',
         type: 'aedes broker',
         mqtt_port: '1884',
         name: 'Aedes 1884',
-        mqtt_ws_port: '8080'
+        mqtt_ws_port: '8080',
+        wires: [
+          [], []
+        ]
       }
     ],
     function () {
@@ -54,7 +60,7 @@ describe('Aedes Broker Websocket tests', function () {
         mqtt_ws_port: '8080',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
@@ -116,7 +122,7 @@ describe('Aedes Broker Websocket tests', function () {
         mqtt_ws_path: '/mqtt',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {

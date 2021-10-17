@@ -22,7 +22,10 @@ describe('Aedes Broker TCP tests', function () {
       id: 'n1',
       type: 'aedes broker',
       mqtt_port: '1883',
-      name: 'Aedes 1883'
+      name: 'Aedes 1883',
+      wires: [
+        [], []
+      ]
     }];
     helper.load(aedesNode, flow, function () {
       const n1 = helper.getNode('n1');
@@ -41,7 +44,7 @@ describe('Aedes Broker TCP tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
@@ -80,7 +83,7 @@ describe('Aedes Broker TCP tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
@@ -138,7 +141,7 @@ describe('Aedes Broker TCP tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
@@ -162,7 +165,7 @@ describe('Aedes Broker TCP tests', function () {
         mqtt_port: '1884',
         name: 'Aedes 1884',
         wires: [
-          ['n12']
+          ['n12'], []
         ]
       }, {
         id: 'n12',
@@ -210,12 +213,18 @@ describe('Aedes Broker TCP tests', function () {
         id: 'n1',
         type: 'aedes broker',
         mqtt_port: '1883',
-        name: 'Aedes 1883'
+        name: 'Aedes 1883',
+        wires: [
+          [], []
+        ]
       }, {
         id: 'n11',
         type: 'aedes broker',
         mqtt_port: '1883',
-        name: 'Aedes 1883 2'
+        name: 'Aedes 1883 2',
+        wires: [
+          [], []
+        ]
       }
     ],
     function () {
@@ -235,7 +244,7 @@ describe('Aedes Broker TCP tests', function () {
       mqtt_port: '1883',
       name: 'Aedes 1883',
       wires: [
-        ['n2']
+        ['n2'], []
       ]
     },
     {
@@ -269,7 +278,7 @@ describe('Aedes Broker TCP tests', function () {
         mqtt_port: '1883',
         name: 'Aedes 1883',
         wires: [
-          ['n2']
+          ['n2'], []
         ]
       },
       {
