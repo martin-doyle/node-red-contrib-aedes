@@ -268,7 +268,7 @@ module.exports = function (RED) {
       node.send([msg, null]);
     });
 
-    if (this.wires[1] && this.wires[1].length > 0) {
+    if (this.wires && this.wires[1] && this.wires[1].length > 0) {
       node.log('Publish output wired. Enable broker publish event messages.');
       broker.on('publish', function (packet, client) {
         const msg = {
