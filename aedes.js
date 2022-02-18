@@ -309,7 +309,7 @@ module.exports = function (RED) {
     });
 
     this.on('close', function (done) {
-      process.nextTick(function onCloseDelayed () {
+      //process.nextTick(function onCloseDelayed () {
         broker.close(function () {
           node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
           server.close(function () {
@@ -334,7 +334,7 @@ module.exports = function (RED) {
           });
         });
       });
-    });
+    //});
   }
 
   RED.nodes.registerType('aedes broker', AedesBrokerNode, {
