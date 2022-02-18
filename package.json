@@ -12,7 +12,7 @@
     "node-red-node-test-helper": "^0.2.7"
   },
   "scripts": {
-    "test": "semistandard --verbose | snazzy && mocha test/**/*_spec.js"
+    "test": "semistandard --verbose | snazzy && mocha test/**/*.js --exit"
   },
   "node-red": {
     "nodes": {
