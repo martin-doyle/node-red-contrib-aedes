@@ -170,7 +170,9 @@ module.exports = function (RED) {
     if (this.credentials && this.username && this.password) {
       const authenticate = function (client, username, password, callback) {
         const authorized = (username === node.username && password.toString() === node.password);
-        if (authorized) { client.user = username; }
+        if (authorized) {
+          client.user = username;
+        }
         callback(null, authorized);
       };
 
@@ -194,7 +196,11 @@ module.exports = function (RED) {
           client: client
         }
       };
-      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
+      node.status({
+        fill: 'green',
+        shape: 'dot',
+        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+      });
       node.send([msg, null]);
     });
 
@@ -206,7 +212,11 @@ module.exports = function (RED) {
         }
       };
       node.send([msg, null]);
-      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
+      node.status({
+        fill: 'green',
+        shape: 'dot',
+        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+      });
     });
 
     broker.on('clientError', function (client, err) {
@@ -218,7 +228,11 @@ module.exports = function (RED) {
         }
       };
       node.send([msg, null]);
-      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
+      node.status({
+        fill: 'green',
+        shape: 'dot',
+        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+      });
     });
 
     broker.on('connectionError', function (client, err) {
@@ -230,7 +244,11 @@ module.exports = function (RED) {
         }
       };
       node.send([msg, null]);
-      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
+      node.status({
+        fill: 'green',
+        shape: 'dot',
+        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+      });
     });
 
     broker.on('keepaliveTimeout', function (client) {
@@ -241,7 +259,11 @@ module.exports = function (RED) {
         }
       };
       node.send([msg, null]);
-      node.status({ fill: 'green', shape: 'dot', text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients }) });
+      node.status({
+        fill: 'green',
+        shape: 'dot',
+        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+      });
     });
 
     broker.on('subscribe', function (subscription, client) {
@@ -287,27 +309,29 @@ module.exports = function (RED) {
     });
 
     this.on('close', function (done) {
-      broker.close(function () {
-        node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
-        server.close(function () {
-          node.debug('after server.close(): ');
-          if (node.mqtt_ws_path !== '') {
-            node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
-            delete listenerNodes[node.fullPath];
-            node.server.close();
-          }
-          if (wss) {
-            node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
-            wss.close(function () {
-              node.debug('after wss.close(): ');
-              httpServer.close(function () {
-                node.debug('after httpServer.close(): ');
-                done();
+      process.nextTick(function onCloseDelayed () {
+        broker.close(function () {
+          node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
+          server.close(function () {
+            node.debug('after server.close(): ');
+            if (node.mqtt_ws_path !== '') {
+              node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
+              delete listenerNodes[node.fullPath];
+              node.server.close();
+            }
+            if (wss) {
+              node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
+              wss.close(function () {
+                node.debug('after wss.close(): ');
+                httpServer.close(function () {
+                  node.debug('after httpServer.close(): ');
+                  done();
+                });
               });
-            });
-          } else {
-            done();
-          }
+            } else {
+              done();
+            }
+          });
         });
       });
     });
