@@ -1,5 +1,12 @@
 # node-red-contrib-aedes Changelog
 
+## May 22, 2022, Version 0.8
+### Notable changes
+- Update aedes to version 0.47
+
+## Feb 18, 2022, Version 0.7
+### Notable changes
+- Fix Close Time Out Issue
 ## Oct 17, 2021, Version 0.6
 ### Notable changes
 - Add output node for publish events
