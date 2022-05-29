@@ -1,5 +1,10 @@
 # node-red-contrib-aedes Changelog
 
+## May 29, 2022, Version 0.8.1
+### Notable changes
+- Fix issue with incomplete credentials
+
+
 ## May 22, 2022, Version 0.8
 ### Notable changes
 - Update aedes to version 0.47
