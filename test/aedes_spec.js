@@ -5,6 +5,9 @@ const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
 const mqtt = require('mqtt/mqtt.js');
 
+const credentialsOK = { n1: { username: 'test', password: 'test' }, b1: { user: 'test', password: 'test' } };
+const credentialsMissing = { n1: { username: 'test', password: 'test' }, b1: { user: 'test' } };
+
 helper.init(require.resolve('node-red'));
 
 describe('Aedes Broker TCP tests', function () {
@@ -70,8 +73,87 @@ describe('Aedes Broker TCP tests', function () {
         msg.should.have.property('topic', 'clientReady');
         done();
       });
-    }
-    );
+    });
+  });
+
+  it('should not connect an mqtt client with missing authentication', function (done) {
+    this.timeout(10000); // have to wait for the inject with delay of 10 seconds
+    const flow = [
+      {
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        name: 'Aedes 1883',
+        wires: [
+          ['n2'], []
+        ]
+      },
+      {
+        id: 'n2',
+        type: 'helper'
+      }, {
+        id: 'n3',
+        type: 'mqtt in',
+        name: 'Aedes1 1883',
+        topic: 'test1883',
+        broker: 'b1'
+      }, {
+        id: 'b1',
+        type: 'mqtt-broker',
+        name: 'Broker',
+        broker: 'localhost',
+        port: '1883'
+      }
+    ];
+
+    helper.load([aedesNode, mqttNode], flow, credentialsMissing,
+      function () {
+        const n2 = helper.getNode('n2');
+        n2.on('input', function (msg) {
+          msg.should.have.property('topic', 'clientError');
+          done();
+        });
+      });
+  });
+
+  it('should connect an mqtt client with authentication', function (done) {
+    this.timeout(10000); // have to wait for the inject with delay of 10 seconds
+    const flow = [
+      {
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        name: 'Aedes 1883',
+        wires: [
+          ['n2'], []
+        ]
+      },
+      {
+        id: 'n2',
+        type: 'helper'
+      }, {
+        id: 'n3',
+        type: 'mqtt in',
+        name: 'Aedes1 1883',
+        topic: 'test1883',
+        broker: 'b1'
+      }, {
+        id: 'b1',
+        type: 'mqtt-broker',
+        name: 'Broker',
+        broker: 'localhost',
+        port: '1883'
+      }
+    ];
+
+    helper.load([aedesNode, mqttNode], flow, credentialsOK,
+      function () {
+        const n2 = helper.getNode('n2');
+        n2.on('input', function (msg) {
+          msg.should.have.property('topic', 'clientReady');
+          done();
+        });
+      });
   });
 
   it('a subscriber should receive a message from a publisher', function (done) {
