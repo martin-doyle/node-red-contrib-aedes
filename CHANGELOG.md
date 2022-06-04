@@ -1,9 +1,12 @@
 # node-red-contrib-aedes Changelog
 
+## Jun 03, 2022, Version 0.8.2
+### Notable changes
+- Fix Scorecard Warnings
+
 ## May 29, 2022, Version 0.8.1
 ### Notable changes
 - Fix issue with incomplete credentials
-
 
 ## May 22, 2022, Version 0.8
 ### Notable changes
