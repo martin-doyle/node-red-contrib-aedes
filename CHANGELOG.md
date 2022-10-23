@@ -1,5 +1,10 @@
 # node-red-contrib-aedes Changelog
 
+## Oct 23, 2022, Version 0.9
+### Notable changes
+- Update aedes to version 0.48
+- Update node-red-node-test-helper to version 0.3.0
+
 ## Jun 03, 2022, Version 0.8.2
 ### Notable changes
 - Fix Scorecard Warnings
