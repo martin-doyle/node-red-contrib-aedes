@@ -1,5 +1,10 @@
 # node-red-contrib-aedes Changelog
 
+## Dec 27, 2022, Version 0.9.1
+### Notable changes
+- Update aedes to version 0.48.1
+- Update aedes-persistence-mongodb to version 9.1.1
+
 ## Oct 23, 2022, Version 0.9
 ### Notable changes
 - Update aedes to version 0.48
