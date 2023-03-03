@@ -1,5 +1,10 @@
 # node-red-contrib-aedes Changelog
 
+## Mar 03, 2023, Version 0.10.0
+### Notable changes
+- Update aedes to version 0.49.0
+
+
 ## Dec 27, 2022, Version 0.9.1
 ### Notable changes
 - Update aedes to version 0.48.1

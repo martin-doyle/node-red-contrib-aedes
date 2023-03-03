@@ -78,7 +78,7 @@ module.exports = function (RED) {
       serverOptions.key = this.key;
     }
 
-    const broker = new aedes.Server(aedesSettings);
+    const broker = aedes.createBroker(aedesSettings);
     let server;
     if (this.usetls) {
       server = tls.createServer(serverOptions, broker.handle);
