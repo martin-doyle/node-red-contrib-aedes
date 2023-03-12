@@ -13,6 +13,10 @@
       "upload": "Upload",
       "cert": "Certificate",
       "key": "Private Key",
+      "persistence_bind": "Persistence",
+      "persistence_memory": "Memory",
+      "persistence_mongodb": "MongoDB",
+      "persistence_level": "LevelDB",
       "dburl": "DB Url"
     },
     "placeholder": {
