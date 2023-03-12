@@ -16,7 +16,9 @@
 
 module.exports = function (RED) {
   'use strict';
-  const mongoPersistence = require('aedes-persistence-mongodb');
+  const MongoPersistence = require('aedes-persistence-mongodb');
+  const { Level } = require('level');
+  const LevelPersistence = require('aedes-persistence-level');
   const aedes = require('aedes');
   const net = require('net');
   const tls = require('tls');
@@ -26,6 +28,7 @@ module.exports = function (RED) {
 
   let serverUpgradeAdded = false;
   const listenerNodes = {};
+  let db;
 
   function handleServerUpgrade (request, socket, head) {
     const pathname = new URL(request.url, 'http://example.org').pathname;
@@ -66,11 +69,22 @@ module.exports = function (RED) {
     const aedesSettings = {};
     const serverOptions = {};
 
-    if (config.dburl) {
-      aedesSettings.persistence = mongoPersistence({
+    if ((config.persistence_bind === 'mongodb') && config.dburl) {
+      aedesSettings.persistence = MongoPersistence({
         url: config.dburl
       });
       node.log('Start persistence to MongeDB');
+    } else if (config.persistence_bind === 'level') {
+      db = new Level('leveldb', { valueEncoding: 'json' });
+      aedesSettings.persistence = LevelPersistence(db);
+      node.log('Start persistence to LevelDB');
+      db.open(function (err) {
+        if (err) {
+          node.error('Error opening LevelDB: ' + err);
+        } else {
+          node.log('LevelDB successful opened');
+        }
+      });
     }
 
     if ((this.cert) && (this.key) && (this.usetls)) {
@@ -168,15 +182,13 @@ module.exports = function (RED) {
     }
 
     if (this.credentials && this.username && this.password) {
-      const authenticate = function (client, username, password, callback) {
+      broker.authenticate = function (client, username, password, callback) {
         const authorized = (username === node.username && password && password.toString() === node.password);
         if (authorized) {
           client.user = username;
         }
         callback(null, authorized);
       };
-
-      broker.authenticate = authenticate;
     }
 
     broker.on('client', function (client) {
@@ -310,29 +322,46 @@ module.exports = function (RED) {
 
     this.on('close', function (done) {
       process.nextTick(function onCloseDelayed () {
-        broker.close(function () {
-          node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
-          server.close(function () {
-            node.debug('after server.close(): ');
-            if (node.mqtt_ws_path !== '') {
-              node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
-              delete listenerNodes[node.fullPath];
-              node.server.close();
-            }
-            if (wss) {
-              node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
-              wss.close(function () {
-                node.debug('after wss.close(): ');
-                httpServer.close(function () {
-                  node.debug('after httpServer.close(): ');
-                  done();
-                });
+        function wsClose () {
+          if (wss) {
+            node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
+            wss.close(function () {
+              node.debug('after wss.close(): ');
+              httpServer.close(function () {
+                node.debug('after httpServer.close(): ');
+                done();
               });
-            } else {
-              done();
-            }
+            });
+          } else {
+            done();
+          }
+        }
+
+        function brokerClose () {
+          broker.close(function () {
+            node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
+            server.close(function () {
+              node.debug('after server.close(): ');
+              if (node.mqtt_ws_path !== '') {
+                node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
+                delete listenerNodes[node.fullPath];
+                node.server.close(function () {
+                  wsClose();
+                });
+              } else {
+                wsClose();
+              }
+            });
           });
-        });
+        }
+
+        if (db) {
+          db.close(function () {
+            brokerClose();
+          });
+        } else {
+          brokerClose();
+        }
       });
     });
   }
