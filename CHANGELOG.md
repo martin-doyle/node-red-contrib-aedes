@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Mar 13, 2023, Version 0.11.0
+### Notable changes
+- Add LevelDB persistence
+
 ## Mar 03, 2023, Version 0.10.0
 ### Notable changes
 - Update aedes to version 0.49.0

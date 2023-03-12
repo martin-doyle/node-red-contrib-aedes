@@ -30,7 +30,7 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 - Standard TCP Support
 - WebSocket Support via port or path
 - SSL / TLS
-- Message Persistence (In-memory or MongoDB)
+- Message Persistence (In-memory, LevelDB or MongoDB)
  
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
 
