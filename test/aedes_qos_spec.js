@@ -81,9 +81,7 @@ describe('Aedes Broker QOS tests', function () {
           client2.end(function () {
             client1.publish('test1883', 'test', { qos: 1 }, function () {
               // console.log('Published');
-              setTimeout(function () {
-                client2.reconnect();
-              }, 1000);
+              client2.reconnect();
             });
           });
         } else if (msg.topic === 'clientReady') {
@@ -148,9 +146,7 @@ describe('Aedes Broker QOS tests', function () {
           client2.end(function () {
             client1.publish('test1883', 'test', { qos: 2 }, function () {
               // console.log('Published');
-              setTimeout(function () {
-                client2.reconnect();
-              }, 1000);
+              client2.reconnect();
             });
           });
         } else if (msg.topic === 'clientReady') {

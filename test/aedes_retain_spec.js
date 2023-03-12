@@ -57,27 +57,27 @@ describe('Aedes Broker retain tests', function () {
       client1.on('error', function (err) {
         console.error('Error: ', err.toString());
       });
+      client2.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
       client1.on('connect', function () {
         // console.log('External client1 connected');
         client1.publish('test1883', 'test', { retain: true }, function () {
           // console.log('Published  test');
-          client2.on('error', function (err) {
-            console.error('Error: ', err.toString());
-          });
-          client2.on('connect', function () {
-            // console.log('External client2 connected');
-            setTimeout(function () {
-              client2.subscribe('test1883', function (err, granted) {
-                // console.log('Subscription successful ' + JSON.stringify(granted));
-                if (err) {
-                  console.error('Error subscribing');
-                  done();
-                }
-              });
-            }, 1000);
+          client2.subscribe('test1883', function (err, granted) {
+            // console.log('Subscription successful ' + JSON.stringify(granted));
+            if (err) {
+              console.error('Error subscribing');
+              done();
+            }
           });
         });
-      }); const n2 = helper.getNode('n2');
+      });
+      client2.on('connect', function () {
+        // console.log('External client2 connected');
+      });
+
+      const n2 = helper.getNode('n2');
       n2.on('input', function (msg) {
         // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
         if (msg.topic === 'subscribe') {
@@ -121,30 +121,29 @@ describe('Aedes Broker retain tests', function () {
       client1.on('error', function (err) {
         console.error('Error: ', err.toString());
       });
+      client2.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+      client2.on('connect', function () {
+        // console.log('External client2 connected');
+      });
       client1.on('connect', function () {
         // console.log('External client1 connected');
         client1.publish('test1883', 'test1', { retain: true }, function () {
           // console.log('Published  test1');
           client1.publish('test1883', 'test2', { retain: true }, function () {
             // console.log('Published  test2');
-            client2.on('error', function (err) {
-              console.error('Error: ', err.toString());
-            });
-            client2.on('connect', function () {
-              // console.log('External client2 connected');
-              setTimeout(function () {
-                client2.subscribe('test1883', function (err, granted) {
-                  // console.log('Subscription successful ' + JSON.stringify(granted));
-                  if (err) {
-                    console.error('Error subscribing');
-                    done();
-                  }
-                });
-              }, 1000);
+            client2.subscribe('test1883', function (err, granted) {
+              // console.log('Subscription successful ' + JSON.stringify(granted));
+              if (err) {
+                console.error('Error subscribing');
+                done();
+              }
             });
           });
         });
-      }); const n2 = helper.getNode('n2');
+      });
+      const n2 = helper.getNode('n2');
       n2.on('input', function (msg) {
         // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
         if (msg.topic === 'subscribe') {
@@ -161,6 +160,129 @@ describe('Aedes Broker retain tests', function () {
           client1.end(function () {
             done();
           });
+        });
+      });
+    });
+  });
+
+  it('a publisher (retain = true) should send a message', function (done) {
+    this.timeout(10000); // have to wait for the inject with delay of 10 seconds
+    const flow = [
+      {
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        persistence_bind: 'level',
+        name: 'Aedes 1883',
+        wires: [
+          ['n2'], []
+        ]
+      },
+      {
+        id: 'n2',
+        type: 'helper'
+      }
+    ];
+
+    helper.load([aedesNode, mqttNode], flow, function () {
+      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+      client1.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+
+      client1.on('connect', function () {
+        // console.log('External client1 connected');
+        client1.subscribe('test1883', function (err, granted) {
+          // console.log('Subscription successful ' + JSON.stringify(granted));
+          if (err) {
+            console.error('Error subscribing');
+            done();
+          }
+          client1.publish('test1883', 'Retained Message', { retain: true }, function () {
+            // console.log('Published  Retained Message');
+          });
+        });
+        const n2 = helper.getNode('n2');
+        let counter = 0;
+        n2.on('input', function (msg) {
+          // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+          if (msg.topic === 'subscribe') {
+            // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+          } else if (msg.topic === 'clientReady') {
+            // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
+          }
+        });
+        client1.on('message', function (topic, message) {
+          if (counter === 0) {
+            counter++;
+          } else {
+            return;
+          }
+          console.log(message.toString());
+          should(topic.toString()).equal('test1883');
+          should(message.toString()).equal('Retained Message');
+          try {
+            client1.end(true, {}, function () {
+              done();
+            });
+          } catch (err) {
+            done(err);
+          }
+        });
+      });
+    });
+  });
+
+  it('a subscriber (retain = true) should receive the last message on first subscribe after restart', function (done) {
+    this.timeout(10000); // have to wait for the inject with delay of 10 seconds
+    const flow = [
+      {
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        persistence_bind: 'level',
+        name: 'Aedes 1883',
+        wires: [
+          ['n2']
+        ]
+      },
+      {
+        id: 'n2',
+        type: 'helper'
+      }
+    ];
+
+    helper.load([aedesNode, mqttNode], flow, function () {
+      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+      client1.on('error', function (err) {
+        console.error('Error: ', err.toString());
+      });
+
+      client1.on('connect', function () {
+        // console.log('External client1 connected');
+        client1.subscribe('test1883', function (err, granted) {
+          // console.log('Subscription successful ' + JSON.stringify(granted));
+          if (err) {
+            console.error('Error subscribing');
+            done();
+          }
+        });
+      });
+      const n2 = helper.getNode('n2');
+      n2.on('input', function (msg) {
+        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+        if (msg.topic === 'subscribe') {
+          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+        } else if (msg.topic === 'clientReady') {
+          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
+        }
+      });
+      client1.on('message', function (topic, message) {
+        // console.log(message.toString());
+        should(topic.toString()).equal('test1883');
+        should(message.toString()).equal('Retained Message');
+        client1.end(true, {}, function () {
+          done();
         });
       });
     });
