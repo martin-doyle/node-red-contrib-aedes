@@ -105,9 +105,14 @@ dist
 
 #JetBrains directory
 .idea
+
+# Other
 /test/secure/
 /test/aedes_secure_spec.js
 /secure/
+/data/
+/leveldb/
+.DS_Store
 
 # package-lock.json
 package-lock.json
