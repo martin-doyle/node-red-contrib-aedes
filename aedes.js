@@ -17,8 +17,10 @@
 module.exports = function (RED) {
   'use strict';
   const MongoPersistence = require('aedes-persistence-mongodb');
+  /*
   const { Level } = require('level');
   const LevelPersistence = require('aedes-persistence-level');
+  */
   const aedes = require('aedes');
   const net = require('net');
   const tls = require('tls');
@@ -75,6 +77,7 @@ module.exports = function (RED) {
       });
       node.log('Start persistence to MongeDB');
     } else if (config.persistence_bind === 'level') {
+      /*
       db = new Level('leveldb', { valueEncoding: 'json' });
       aedesSettings.persistence = LevelPersistence(db);
       node.log('Start persistence to LevelDB');
@@ -85,6 +88,7 @@ module.exports = function (RED) {
           node.log('LevelDB successful opened');
         }
       });
+      */
     }
 
     if ((this.cert) && (this.key) && (this.usetls)) {
@@ -356,9 +360,9 @@ module.exports = function (RED) {
         }
 
         if (db) {
-          db.close(function () {
-            brokerClose();
-          });
+          // db.close(function () {
+          brokerClose();
+          // });
         } else {
           brokerClose();
         }
