@@ -165,6 +165,8 @@ describe('Aedes Broker retain tests', function () {
     });
   });
 
+  /*
+
   it('a publisher (retain = true) should send a message', function (done) {
     this.timeout(10000); // have to wait for the inject with delay of 10 seconds
     const flow = [
@@ -287,4 +289,5 @@ describe('Aedes Broker retain tests', function () {
       });
     });
   });
+  */
 });
