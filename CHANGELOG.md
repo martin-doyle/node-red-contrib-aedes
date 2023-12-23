@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Dec 23, 2023, Version 0.12.0
+### Notable changes
+- Update aedes to version 0.50.1
+
 ## Mar 13, 2023, Version 0.11.1
 ### Notable changes
 - LevelDB removed, crashes on certain systems

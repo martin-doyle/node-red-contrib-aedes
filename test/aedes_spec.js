@@ -3,7 +3,7 @@
 const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
-const mqtt = require('mqtt/mqtt.js');
+const mqtt = require('mqtt');
 
 const credentialsOK = { n1: { username: 'test', password: 'test' }, b1: { user: 'test', password: 'test' } };
 const credentialsMissing = { n1: { username: 'test', password: 'test' }, b1: { user: 'test' } };
