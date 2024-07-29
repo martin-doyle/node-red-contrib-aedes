@@ -1,5 +1,13 @@
 # node-red-contrib-aedes Changelog
 
+## Jul 29, 2024, Version 0.13.2
+### Notable changes
+- New tests with NodeJS 22
+
+## Jun 21, 2024, Version 0.13.1
+### Notable changes
+- Update aedes to version 0.51.2
+
 ## Feb 16, 2024, Version 0.13.0
 ### Notable changes
 - Update aedes to version 0.51.0

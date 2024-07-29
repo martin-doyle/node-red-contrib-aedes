@@ -9,7 +9,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x, 20.x]
+        node-version: [18.x, 20.x, 22.x]
+        node-red: [2.x, 3.x, 4.x]
 
     steps:
     - uses: actions/checkout@v3
@@ -18,7 +19,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm install
-    - run: npm install -g node-red
+    - run: npm install -g node-red@${{ matrix.node-red }}
     - run: npm link node-red
     - run: npm install -g mocha
     - run: npm install -g semistandard
