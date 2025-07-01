@@ -199,7 +199,7 @@ module.exports = function (RED) {
       const msg = {
         topic: 'client',
         payload: {
-          client: client
+          client
         }
       };
       node.send([msg, null]);
@@ -209,7 +209,7 @@ module.exports = function (RED) {
       const msg = {
         topic: 'clientReady',
         payload: {
-          client: client
+          client
         }
       };
       node.status({
@@ -224,7 +224,7 @@ module.exports = function (RED) {
       const msg = {
         topic: 'clientDisconnect',
         payload: {
-          client: client
+          client
         }
       };
       node.send([msg, null]);
@@ -239,8 +239,8 @@ module.exports = function (RED) {
       const msg = {
         topic: 'clientError',
         payload: {
-          client: client,
-          err: err
+          client,
+          err
         }
       };
       node.send([msg, null]);
@@ -255,8 +255,8 @@ module.exports = function (RED) {
       const msg = {
         topic: 'connectionError',
         payload: {
-          client: client,
-          err: err
+          client,
+          err
         }
       };
       node.send([msg, null]);
@@ -271,7 +271,7 @@ module.exports = function (RED) {
       const msg = {
         topic: 'keepaliveTimeout',
         payload: {
-          client: client
+          client
         }
       };
       node.send([msg, null]);
@@ -288,7 +288,7 @@ module.exports = function (RED) {
         payload: {
           topic: subscription.topic,
           qos: subscription.qos,
-          client: client
+          client
         }
       };
       node.send([msg, null]);
@@ -300,7 +300,7 @@ module.exports = function (RED) {
         payload: {
           topic: subscription.topic,
           qos: subscription.qos,
-          client: client
+          client
         }
       };
       node.send([msg, null]);
@@ -312,8 +312,8 @@ module.exports = function (RED) {
         const msg = {
           topic: 'publish',
           payload: {
-            packet: packet,
-            client: client
+            packet,
+            client
           }
         };
         node.send([null, msg]);
