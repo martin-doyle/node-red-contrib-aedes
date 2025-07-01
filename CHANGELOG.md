@@ -1,8 +1,13 @@
 # node-red-contrib-aedes Changelog
 
-## Jul 01, 2025
+## Jul 01, 2025, Version 0.11.4
 ### Notable changes
-- Updated aedes to 0.51.2 and edes-persistence-mongodb to 9.2
+- Make this NodeJS 14 compatible
+- Aedes back to 0.49.0 and aedes-persistence-mongodb to 9.1.1
+
+## Jul 01, 2025, Version 0.11.3
+### Notable changes
+- Updated aedes to 0.51.2 and aedes-persistence-mongodb to 9.2
 
 ## Mar 13, 2023, Version 0.11.1
 ### Notable changes
