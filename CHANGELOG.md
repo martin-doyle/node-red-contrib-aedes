@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Jul 01, 2025
+### Notable changes
+- Updated aedes to 0.51.2 and edes-persistence-mongodb to 9.2
+
 ## Mar 13, 2023, Version 0.11.1
 ### Notable changes
 - LevelDB removed, crashes on certain systems
