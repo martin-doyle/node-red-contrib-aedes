@@ -9,8 +9,8 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
-        node-red: [2.x, 3.x, 4.x]
+        node-version: [20.x, 22.x]
+        node-red: [3.x, 4.x]
 
     steps:
     - uses: actions/checkout@v3

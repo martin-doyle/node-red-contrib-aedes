@@ -3,6 +3,7 @@
 ## Jul 02, 2025, Version 0.14.0
 ### Breaking changes
 - Dependencies require NodeJS 20
+- Requires NodeR-RED 3 and up
 - Update aedes to version 0.51.3
 - Update edes-persistence-mongodb to version 9.3.0
 
