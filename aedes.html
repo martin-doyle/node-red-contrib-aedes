@@ -14,7 +14,7 @@
   limitations under the License.
 -->
 
-<script type="text/x-red" data-template-name="aedes broker">
+<script type="text/html" data-template-name="aedes broker">
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="node-red:common.label.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]node-red:common.label.name">
@@ -47,32 +47,54 @@
                 <input type="checkbox" id="node-input-usetls" style="display: inline-block; width: auto; vertical-align: top;">
                 <label for="node-input-usetls" style="width: auto" data-i18n="aedes-mqtt-broker.label.use-tls"></label>
                 <div id="node-input-tls" class="hide">
+                    <div class="form-row" id="node-row-uselocalfiles">
+                        <input type="checkbox" id="node-input-uselocalfiles" style="display: inline-block; width: auto; vertical-align: top;">
+                        <label for="node-input-uselocalfiles" style="width: 70%;"><span data-i18n="aedes-mqtt-broker.label.use-local-files"></label>
+                    </div>
+
                     <div class="form-row">
                         <label style="width: 120px;"><i class="fa fa-file-text-o"></i> <span data-i18n="aedes-mqtt-broker.label.cert"></span></label>
                         <span class="tls-input-data">
                             <label class="red-ui-button" for="node-input-certfile"><i class="fa fa-upload"></i> <span data-i18n="aedes-mqtt-broker.label.upload"></span></label>
                             <input class="hide" type="file" id="node-input-certfile">
                             <span id="tls-certname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
-                            <button class="red-ui-button red-ui-button-small" id="tls-button-cert-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+                            <button type="button" class="red-ui-button red-ui-button-small" id="tls-button-cert-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
                         </span>
                         <input type="hidden" id="node-input-certname">
                         <input type="hidden" id="node-input-certdata">
                         <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-cert" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.cert">
                     </div>
+                    
                     <div class="form-row">
                         <label style="width: 120px;" for="node-input-key"><i class="fa fa-file-text-o"></i> <span data-i18n="aedes-mqtt-broker.label.key"></span></label>
                         <span class="tls-input-data">
                             <label class="red-ui-button" for="node-input-keyfile"><i class="fa fa-upload"></i> <span data-i18n="aedes-mqtt-broker.label.upload"></span></label>
                             <input class="hide" type="file" id="node-input-keyfile">
                             <span id="tls-keyname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
-                            <button class="red-ui-button red-ui-button-small" id="tls-button-key-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+                            <button type="button" class="red-ui-button red-ui-button-small" id="tls-button-key-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
                         </span>
                         <input type="hidden" id="node-input-keyname">
                         <input type="hidden" id="node-input-keydata">
-                        <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-key" data-i18n="[placeholder]tls.placeholder.key">
+                        <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-key" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.key">
+                    </div>
+                    
+                    <div class="form-row">
+                        <label style="width: 120px;" for="node-input-ca"><i class="fa fa-file-text-o"></i> <span data-i18n="aedes-mqtt-broker.label.ca"></span></label>
+                        <span class="tls-input-data">
+                            <label class="red-ui-button" for="node-input-cafile"><i class="fa fa-upload"></i> <span data-i18n="aedes-mqtt-broker.label.upload"></span></label>
+                            <input class="hide" type="file" title=" " id="node-input-cafile">
+                            <span id="tls-caname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
+                            <button type="button" class="red-ui-button red-ui-button-small" id="tls-button-ca-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+                        </span>
+                        <input type="hidden" id="node-input-caname">
+                        <input type="hidden" id="node-input-cadata">
+                        <input class="hide tls-input-path" style="width: calc(100% - 170px);" type="text" id="node-input-ca" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.ca">
                     </div>
                 </div>
             </div>
+        </div>
+        <div id="aedes-broker-tab-persistence" style="display:none">
+
             <div class="form-row">
               <label for="node-input-persistence_bind"><i class="fa fa-globe"></i> <span data-i18n="aedes-mqtt-broker.label.persistence_bind"></label>
               <select id="node-input-persistence_bind" type="text" style="width:30%" text-center>
@@ -128,8 +150,10 @@
           return currentCert === '' || v !== '';
         }
       },
+      ca: {value:""},
       certname: { value: '' },
       keyname: { value: '' },
+      caname: {value:""},
       persistence_bind: { value: 'memory', required: true },
       dburl: { value: '', required: false },
       usetls: { value: false }
@@ -138,7 +162,8 @@
       username: { type: 'text' },
       password: { type: 'password' },
       certdata: { type: 'text' },
-      keydata: { type: 'text' }
+      keydata: { type: 'text' },
+      cadata: {type:"text"}
     },
     color: '#d8bfd8',
     inputs: 0,
@@ -226,7 +251,7 @@
         this.usetls = false;
         $('#node-input-usetls').prop('checked', false);
       }
-      function updateTLSOptions () {
+      function updateTLSOptions() {
         if ($('#node-input-usetls').is(':checked')) {
           $('#node-input-tls').show();
         } else {
@@ -270,9 +295,17 @@
       });
 
       function updateFileUpload() {
-        $('.tls-input-data').show();
-        $('.tls-input-path').hide();
+        if ($("#node-input-uselocalfiles").is(':checked')) {
+          $(".tls-input-path").show();
+          $(".tls-input-data").hide();
+        } else {
+          $(".tls-input-data").show();
+          $(".tls-input-path").hide();
+        }
       }
+      $("#node-input-uselocalfiles").on("click",function() {
+        updateFileUpload();
+      });
       $('#tls-certname').text(this.certname);
       $('#tls-keyname').text(this.keyname);
       $('#tls-caname').text(this.caname);
