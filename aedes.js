@@ -22,6 +22,7 @@ module.exports = function (RED) {
   const LevelPersistence = require('aedes-persistence-level');
   */
   const aedes = require('aedes');
+  const fs = require('fs');
   const net = require('net');
   const tls = require('tls');
   const http = require('http');
@@ -55,6 +56,9 @@ module.exports = function (RED) {
     this.mqtt_ws_path = '' + config.mqtt_ws_path;
     this.mqtt_ws_bind = config.mqtt_ws_bind;
     this.usetls = config.usetls;
+    const certPath = config.cert.trim();
+    const keyPath = config.key.trim();
+    const caPath = config.ca.trim();
 
     if (this.mqtt_ws_bind === 'path') {
       this.mqtt_ws_port = 0;
@@ -62,11 +66,37 @@ module.exports = function (RED) {
       this.mqtt_ws_path = '';
     }
 
+    if ((certPath.length > 0) || (keyPath.length > 0) || (caPath.length > 0)) {
+      if ((certPath.length > 0) !== (keyPath.length > 0)) {
+        this.valid = false;
+        this.error(RED._('tls.error.missing-file'));
+        return;
+      }
+      try {
+        if (certPath) {
+          this.cert = fs.readFileSync(certPath);
+        }
+        if (keyPath) {
+          this.key = fs.readFileSync(keyPath);
+        }
+        if (caPath) {
+          this.ca = fs.readFileSync(caPath);
+        }
+      } catch (err) {
+        this.valid = false;
+        this.error(err.toString());
+        return;
+      }
+    } else {
+      if (this.credentials) {
+        this.cert = this.credentials.certdata || '';
+        this.key = this.credentials.keydata || '';
+        this.ca = this.credentials.cadata || '';
+      }
+    }
     if (this.credentials) {
       this.username = this.credentials.username;
       this.password = this.credentials.password;
-      this.cert = this.credentials.certdata || '';
-      this.key = this.credentials.keydata || '';
     }
 
     if (typeof this.usetls === 'undefined') {
@@ -101,6 +131,7 @@ module.exports = function (RED) {
     if ((this.cert) && (this.key) && (this.usetls)) {
       serverOptions.cert = this.cert;
       serverOptions.key = this.key;
+      serverOptions.ca = this.ca;
     }
 
     const broker = aedes.createBroker(aedesSettings);
@@ -382,6 +413,7 @@ module.exports = function (RED) {
       username: { type: 'text' },
       password: { type: 'password' },
       certdata: { type: 'text' },
+      cadata: { type: 'text' },
       keydata: { type: 'text' }
     }
   });

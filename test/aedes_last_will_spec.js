@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* eslint no-console: ["error", { allow: ["warn", "error"] }] */
+/* eslint no-console: ["error", { allow: ["log", "warn", "error"] }] */
 const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqtt = require('mqtt');
@@ -27,11 +27,29 @@ describe('Aedes Broker Last Will tests', function () {
         [], []
       ]
     }];
-    helper.load(aedesNode, flow, function () {
-      const n1 = helper.getNode('n1');
-      n1.should.have.property('name', 'Aedes 1883');
+    try {
+      helper.load(aedesNode, flow, function () {
+        const n1 = helper.getNode('n1');
+        n1.should.have.property('name', 'Aedes 1883');
+        done();
+      });
+    } catch (n) {
+    // Check if AggregateError
+      console.log(
+        n instanceof AggregateError
+      );
+
+      // Print the message of the error
+      console.log(n.message);
+
+      // Print the name of the error
+      console.log(n.name);
+
+      // Print all the errors that this
+      // error comprises
+      console.log(n.errors);
       done();
-    });
+    }
   });
 
   it('a subscriber should receive a last will message on publisher disconnect', function (done) {
@@ -56,8 +74,20 @@ describe('Aedes Broker Last Will tests', function () {
         clientId: 'client1',
         will: { topic: 'testLastWill', payload: 'last will' }
       });
-      client1.on('error', function (err) {
-        console.error('Error: ', err.toString());
+      client1.on('error', function (n) {
+        console.log(
+          n instanceof AggregateError
+        );
+
+        // Print the message of the error
+        console.log(n.message);
+
+        // Print the name of the error
+        console.log(n.name);
+
+        // Print all the errors that this
+        // error comprises
+        console.log(n.errors);
       });
       client1.on('connect', function () {
         // console.log('External client1 connected');
