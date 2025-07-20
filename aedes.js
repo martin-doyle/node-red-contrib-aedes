@@ -56,9 +56,13 @@ module.exports = function (RED) {
     this.mqtt_ws_path = '' + config.mqtt_ws_path;
     this.mqtt_ws_bind = config.mqtt_ws_bind;
     this.usetls = config.usetls;
-    const certPath = config.cert.trim();
-    const keyPath = config.key.trim();
-    const caPath = config.ca.trim();
+
+    const certPath = config.cert ? config.cert.trim() : '';
+    const keyPath = config.key ? config.key.trim() : '';
+    const caPath = config.ca ? config.ca.trim() : '';
+
+    this.uselocalfiles = config.uselocalfiles;
+    this.dburl = config.dburl;
 
     if (this.mqtt_ws_bind === 'path') {
       this.mqtt_ws_port = 0;
