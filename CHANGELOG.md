@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Jul 22, 2025, Version 0.15.0
+### Notable changes
+- TLS configuration with local filess
+
 ## Jul 02, 2025, Version 0.14.0
 ### Breaking changes
 - Dependencies require NodeJS 20
