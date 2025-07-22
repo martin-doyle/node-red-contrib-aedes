@@ -9,10 +9,12 @@
       "mqtt_ws_port": "WS port",
       "mqtt_ws_path": "WS path",
       "use-tls": "Enable secure (SSL/TLS) connection",
+      "use-local-files": "Use local files",
       "tls-config": "TLS Configuration",
       "upload": "Upload",
       "cert": "Certificate",
       "key": "Private Key",
+      "ca": "CA Certificate",
       "persistence_bind": "Persistence",
       "persistence_memory": "Memory",
       "persistence_mongodb": "MongoDB",
@@ -25,12 +27,14 @@
       "mqtt_ws_path": "Enter Websocket path. Leave blank to disable Websocket support",
       "cert": "path to certificate (PEM format)",
       "key": "path to private key (PEM format)",
+      "ca": "path to CA certificate (PEM format)",
       "dburl": "mongodb://localhost:27017/mqtt",
       "username": "leave blank to disable authentication",
       "password": "leave blank to disable authentication"
     },
     "tabs-label": {
       "connection": "Connection",
+      "persistence": "Persistence",
       "security": "Security"
     }
   }

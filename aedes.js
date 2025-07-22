@@ -17,11 +17,10 @@
 module.exports = function (RED) {
   'use strict';
   const MongoPersistence = require('aedes-persistence-mongodb');
-  /*
-  const { Level } = require('level');
-  const LevelPersistence = require('aedes-persistence-level');
-  */
+  // const { Level } = require('level');
+  // const LevelPersistence = require('aedes-persistence-level');
   const aedes = require('aedes');
+  const fs = require('fs');
   const net = require('net');
   const tls = require('tls');
   const http = require('http');
@@ -30,7 +29,6 @@ module.exports = function (RED) {
 
   let serverUpgradeAdded = false;
   const listenerNodes = {};
-  let db;
 
   /**
    * Handles a server upgrade.
@@ -42,9 +40,14 @@ module.exports = function (RED) {
   function handleServerUpgrade (request, socket, head) {
     const pathname = new URL(request.url, 'http://example.org').pathname;
     if (Object.prototype.hasOwnProperty.call(listenerNodes, pathname)) {
-      listenerNodes[pathname].server.handleUpgrade(request, socket, head, function done (conn) {
-        listenerNodes[pathname].server.emit('connection', conn, request);
-      });
+      listenerNodes[pathname].server.handleUpgrade(
+        request,
+        socket,
+        head,
+        function done (conn) {
+          listenerNodes[pathname].server.emit('connection', conn, request);
+        }
+      );
     }
   }
 
@@ -56,17 +59,50 @@ module.exports = function (RED) {
     this.mqtt_ws_bind = config.mqtt_ws_bind;
     this.usetls = config.usetls;
 
+    const certPath = config.cert ? config.cert.trim() : '';
+    const keyPath = config.key ? config.key.trim() : '';
+    const caPath = config.ca ? config.ca.trim() : '';
+
+    this.uselocalfiles = config.uselocalfiles;
+    this.dburl = config.dburl;
+
     if (this.mqtt_ws_bind === 'path') {
       this.mqtt_ws_port = 0;
     } else {
       this.mqtt_ws_path = '';
     }
 
+    if (certPath.length > 0 || keyPath.length > 0 || caPath.length > 0) {
+      if ((certPath.length > 0) !== (keyPath.length > 0)) {
+        this.valid = false;
+        this.error(RED._('tls.error.missing-file'));
+        return;
+      }
+      try {
+        if (certPath) {
+          this.cert = fs.readFileSync(certPath);
+        }
+        if (keyPath) {
+          this.key = fs.readFileSync(keyPath);
+        }
+        if (caPath) {
+          this.ca = fs.readFileSync(caPath);
+        }
+      } catch (err) {
+        this.valid = false;
+        this.error(err.toString());
+        return;
+      }
+    } else {
+      if (this.credentials) {
+        this.cert = this.credentials.certdata || '';
+        this.key = this.credentials.keydata || '';
+        this.ca = this.credentials.cadata || '';
+      }
+    }
     if (this.credentials) {
       this.username = this.credentials.username;
       this.password = this.credentials.password;
-      this.cert = this.credentials.certdata || '';
-      this.key = this.credentials.keydata || '';
     }
 
     if (typeof this.usetls === 'undefined') {
@@ -78,29 +114,22 @@ module.exports = function (RED) {
     const aedesSettings = {};
     const serverOptions = {};
 
-    if ((config.persistence_bind === 'mongodb') && config.dburl) {
+    if (config.persistence_bind === 'mongodb' && config.dburl) {
       aedesSettings.persistence = MongoPersistence({
         url: config.dburl
       });
       node.log('Start persistence to MongeDB');
-    } else if (config.persistence_bind === 'level') {
       /*
-      db = new Level('leveldb', { valueEncoding: 'json' });
-      aedesSettings.persistence = LevelPersistence(db);
+    } else if (config.persistence_bind === 'level') {
+      aedesSettings.persistence = LevelPersistence(new Level('leveldb'));
       node.log('Start persistence to LevelDB');
-      db.open(function (err) {
-        if (err) {
-          node.error('Error opening LevelDB: ' + err);
-        } else {
-          node.log('LevelDB successful opened');
-        }
-      });
       */
     }
 
-    if ((this.cert) && (this.key) && (this.usetls)) {
+    if (this.cert && this.key && this.usetls) {
       serverOptions.cert = this.cert;
       serverOptions.key = this.key;
+      serverOptions.ca = this.ca;
     }
 
     const broker = aedes.createBroker(aedesSettings);
@@ -119,9 +148,16 @@ module.exports = function (RED) {
       const testServer = net.createServer();
       testServer.once('error', function (err) {
         if (err.code === 'EADDRINUSE') {
-          node.error('Error: Port ' + config.mqtt_ws_port + ' is already in use');
+          node.error(
+            'Error: Port ' + config.mqtt_ws_port + ' is already in use'
+          );
         } else {
-          node.error('Error creating net server on port ' + config.mqtt_ws_port + ', ' + err.toString());
+          node.error(
+            'Error creating net server on port ' +
+              config.mqtt_ws_port +
+              ', ' +
+              err.toString()
+          );
         }
       });
       testServer.once('listening', function () {
@@ -134,11 +170,16 @@ module.exports = function (RED) {
         } else {
           httpServer = http.createServer();
         }
-        wss = ws.createServer({
-          server: httpServer
-        }, broker.handle);
+        wss = ws.createServer(
+          {
+            server: httpServer
+          },
+          broker.handle
+        );
         httpServer.listen(config.mqtt_ws_port, function () {
-          node.log('Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port);
+          node.log(
+            'Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port
+          );
         });
       });
       testServer.listen(config.mqtt_ws_port, function () {
@@ -153,11 +194,18 @@ module.exports = function (RED) {
       }
 
       let path = RED.settings.httpNodeRoot || '/';
-      path = path + (path.slice(-1) === '/' ? '' : '/') + (node.mqtt_ws_path.charAt(0) === '/' ? node.mqtt_ws_path.substring(1) : node.mqtt_ws_path);
+      path =
+        path +
+        (path.slice(-1) === '/' ? '' : '/') +
+        (node.mqtt_ws_path.charAt(0) === '/'
+          ? node.mqtt_ws_path.substring(1)
+          : node.mqtt_ws_path);
       node.fullPath = path;
 
       if (Object.prototype.hasOwnProperty.call(listenerNodes, path)) {
-        node.error(RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path }));
+        node.error(
+          RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path })
+        );
         return;
       }
       listenerNodes[node.fullPath] = node;
@@ -168,9 +216,12 @@ module.exports = function (RED) {
         serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
       }
 
-      node.server = ws.createServer({
-        noServer: true
-      }, broker.handle);
+      node.server = ws.createServer(
+        {
+          noServer: true
+        },
+        broker.handle
+      );
 
       node.log('Binding aedes mqtt server on ws path: ' + node.fullPath);
     }
@@ -178,23 +229,38 @@ module.exports = function (RED) {
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error('Error: Port ' + config.mqtt_port + ' is already in use');
-        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
+        node.status({
+          fill: 'red',
+          shape: 'ring',
+          text: 'node-red:common.status.disconnected'
+        });
       } else {
         node.error('Error: Port ' + config.mqtt_port + ' ' + err.toString());
-        node.status({ fill: 'red', shape: 'ring', text: 'node-red:common.status.disconnected' });
+        node.status({
+          fill: 'red',
+          shape: 'ring',
+          text: 'node-red:common.status.disconnected'
+        });
       }
     });
 
     if (this.mqtt_port) {
       server.listen(this.mqtt_port, function () {
         node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
-        node.status({ fill: 'green', shape: 'dot', text: 'node-red:common.status.connected' });
+        node.status({
+          fill: 'green',
+          shape: 'dot',
+          text: 'node-red:common.status.connected'
+        });
       });
     }
 
     if (this.credentials && this.username && this.password) {
       broker.authenticate = function (client, username, password, callback) {
-        const authorized = (username === node.username && password && password.toString() === node.password);
+        const authorized =
+          username === node.username &&
+          password &&
+          password.toString() === node.password;
         if (authorized) {
           client.user = username;
         }
@@ -222,7 +288,9 @@ module.exports = function (RED) {
       node.status({
         fill: 'green',
         shape: 'dot',
-        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+        text: RED._('aedes-mqtt-broker.status.connected', {
+          count: broker.connectedClients
+        })
       });
       node.send([msg, null]);
     });
@@ -238,7 +306,9 @@ module.exports = function (RED) {
       node.status({
         fill: 'green',
         shape: 'dot',
-        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+        text: RED._('aedes-mqtt-broker.status.connected', {
+          count: broker.connectedClients
+        })
       });
     });
 
@@ -254,7 +324,9 @@ module.exports = function (RED) {
       node.status({
         fill: 'green',
         shape: 'dot',
-        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+        text: RED._('aedes-mqtt-broker.status.connected', {
+          count: broker.connectedClients
+        })
       });
     });
 
@@ -270,7 +342,9 @@ module.exports = function (RED) {
       node.status({
         fill: 'green',
         shape: 'dot',
-        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+        text: RED._('aedes-mqtt-broker.status.connected', {
+          count: broker.connectedClients
+        })
       });
     });
 
@@ -285,7 +359,9 @@ module.exports = function (RED) {
       node.status({
         fill: 'green',
         shape: 'dot',
-        text: RED._('aedes-mqtt-broker.status.connected', { count: broker.connectedClients })
+        text: RED._('aedes-mqtt-broker.status.connected', {
+          count: broker.connectedClients
+        })
       });
     });
 
@@ -335,7 +411,9 @@ module.exports = function (RED) {
       process.nextTick(function onCloseDelayed () {
         function wsClose () {
           if (wss) {
-            node.log('Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port);
+            node.log(
+              'Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port
+            );
             wss.close(function () {
               node.debug('after wss.close(): ');
               httpServer.close(function () {
@@ -350,11 +428,15 @@ module.exports = function (RED) {
 
         function brokerClose () {
           broker.close(function () {
-            node.log('Unbinding aedes mqtt server from port: ' + config.mqtt_port);
+            node.log(
+              'Unbinding aedes mqtt server from port: ' + config.mqtt_port
+            );
             server.close(function () {
               node.debug('after server.close(): ');
               if (node.mqtt_ws_path !== '') {
-                node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
+                node.log(
+                  'Unbinding aedes mqtt server from ws path: ' + node.fullPath
+                );
                 delete listenerNodes[node.fullPath];
                 node.server.close(function () {
                   wsClose();
@@ -365,14 +447,7 @@ module.exports = function (RED) {
             });
           });
         }
-
-        if (db) {
-          // db.close(function () {
-          brokerClose();
-          // });
-        } else {
-          brokerClose();
-        }
+        brokerClose();
       });
     });
   }
@@ -382,6 +457,7 @@ module.exports = function (RED) {
       username: { type: 'text' },
       password: { type: 'password' },
       certdata: { type: 'text' },
+      cadata: { type: 'text' },
       keydata: { type: 'text' }
     }
   });
