@@ -43,7 +43,14 @@ You can also bind the WebSocket to the root `"/"` path and having `wss://yourser
  
 ## Version Compatibility
 
-The current version requires **Node.js >= 20** and **Node-RED >= 3.0**.
+The current version is based on **Aedes version 1.0**, which introduces several breaking changes. If your environment requires Aedes version 0.51, you can switch to version 0.15.x of this package.
+
+To install the compatible version using the `version-11` dist-tag:
+```sh
+npm install node-red-contrib-aedes@version-15
+```
+
+The current version and version 0.15.x require **Node.js >= 20** and **Node-RED >= 3.0**.
 
 If you are running an older Node.js version (e.g. on locked-down or legacy hardware), please use version **0.11.x** of this package.
 

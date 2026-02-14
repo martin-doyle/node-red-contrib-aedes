@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Feb 14, 2026, Version 1.0.0
+### Notable changes
+ Update aedes to version 1.0.0
+
 ## Jul 22, 2025, Version 0.15.0
 ### Notable changes
 - TLS configuration with local filess
