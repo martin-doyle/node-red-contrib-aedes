@@ -41,6 +41,19 @@ When your Node-RED server address is `https://yourserver/`, you can set the WebS
 
 You can also bind the WebSocket to the root `"/"` path and having `wss://yourserver/` WebSocket listening at port `443` (or `ws://yourserver/` at port `80`).
  
+## Version Compatibility
+
+The current version requires **Node.js >= 20** and **Node-RED >= 3.0**.
+
+If you are running an older Node.js version (e.g. on locked-down or legacy hardware), please use version **0.11.x** of this package.
+
+To install the compatible version using the `version-11` dist-tag:
+```sh
+npm install node-red-contrib-aedes@version-11
+```
+
+For more details, see [issue #85](https://github.com/martin-doyle/node-red-contrib-aedes/issues/85).
+
 ## License
- 
+
  Licensed under [MIT](./LICENSE).
