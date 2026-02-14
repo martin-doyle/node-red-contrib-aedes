@@ -52,49 +52,52 @@ describe('Aedes Broker QOS tests', function () {
       }
     ];
     helper.load([aedesNode, mqttNode], flow, function () {
-      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-      client1.on('error', function (err) {
-        console.error('Error: ', err.toString());
-      });
-      client1.on('connect', function () {
-        // console.log('External client1 connected');
-      });
-      const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
-      client2.on('error', function (err) {
-        console.error('Error: ', err.toString());
-      });
-      client2.on('connect', function () {
-        // console.log('External client2 connected');
-        client2.subscribe('test1883', { qos: 1 }, function (err, granted) {
-          // console.log('Subscription successful ' + JSON.stringify(granted));
-          if (err) {
-            console.error('Error subscribing');
-            done();
+      const n1 = helper.getNode('n1');
+      n1._initPromise.then(function () {
+        const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+        client1.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        client1.on('connect', function () {
+          // console.log('External client1 connected');
+        });
+        const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
+        client2.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        client2.on('connect', function () {
+          // console.log('External client2 connected');
+          client2.subscribe('test1883', { qos: 1 }, function (err, granted) {
+            // console.log('Subscription successful ' + JSON.stringify(granted));
+            if (err) {
+              console.error('Error subscribing');
+              done();
+            }
+          });
+        });
+        const n2 = helper.getNode('n2');
+        n2.on('input', function (msg) {
+          // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+          if (msg.topic === 'subscribe') {
+            // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+            client2.end(function () {
+              client1.publish('test1883', 'test', { qos: 1 }, function () {
+                // console.log('Published');
+                client2.reconnect();
+              });
+            });
+          } else if (msg.topic === 'clientReady') {
+            // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
           }
         });
-      });
-      const n2 = helper.getNode('n2');
-      n2.on('input', function (msg) {
-        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
-        if (msg.topic === 'subscribe') {
-          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+        client2.on('message', function (topic, message) {
+          // console.log(message.toString());
+          should(topic.toString()).equal('test1883');
+          should(message.toString()).equal('test');
           client2.end(function () {
-            client1.publish('test1883', 'test', { qos: 1 }, function () {
-              // console.log('Published');
-              client2.reconnect();
+            client1.end(function () {
+              done();
             });
-          });
-        } else if (msg.topic === 'clientReady') {
-          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
-        }
-      });
-      client2.on('message', function (topic, message) {
-        // console.log(message.toString());
-        should(topic.toString()).equal('test1883');
-        should(message.toString()).equal('test');
-        client2.end(function () {
-          client1.end(function () {
-            done();
           });
         });
       });
@@ -118,48 +121,51 @@ describe('Aedes Broker QOS tests', function () {
       }
     ];
     helper.load([aedesNode, mqttNode], flow, function () {
-      const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-      client1.on('error', function (err) {
-        console.error('Error: ', err.toString());
-      });
-      client1.on('connect', function () {
-        // console.log('External client1 connected');
-      });
-      const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
-      client2.on('error', function (err) {
-        console.error('Error: ', err.toString());
-      });
-      client2.on('connect', function () {
-        // console.log('External client2 connected');
-        client2.subscribe('test1883', { qos: 2 }, function (err, granted) {
-          // console.log('Subscription successful ' + JSON.stringify(granted));
-          if (err) {
-            console.error('Error subscribing');
-            done();
+      const n1 = helper.getNode('n1');
+      n1._initPromise.then(function () {
+        const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
+        client1.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        client1.on('connect', function () {
+          // console.log('External client1 connected');
+        });
+        const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
+        client2.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        client2.on('connect', function () {
+          // console.log('External client2 connected');
+          client2.subscribe('test1883', { qos: 2 }, function (err, granted) {
+            // console.log('Subscription successful ' + JSON.stringify(granted));
+            if (err) {
+              console.error('Error subscribing');
+              done();
+            }
+          });
+        }); const n2 = helper.getNode('n2');
+        n2.on('input', function (msg) {
+          // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
+          if (msg.topic === 'subscribe') {
+            // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+            client2.end(function () {
+              client1.publish('test1883', 'test', { qos: 2 }, function () {
+                // console.log('Published');
+                client2.reconnect();
+              });
+            });
+          } else if (msg.topic === 'clientReady') {
+            // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
           }
         });
-      }); const n2 = helper.getNode('n2');
-      n2.on('input', function (msg) {
-        // console.log('Broker received message topic: ' + msg.topic + ', clientid: ' + msg.payload.client.id);
-        if (msg.topic === 'subscribe') {
-          // console.log('Client ' + msg.payload.client.id + ' subscribed ' + JSON.stringify(msg.payload.client.subscriptions));
+        client2.on('message', function (topic, message) {
+          // console.log(message.toString());
+          should(topic.toString()).equal('test1883');
+          should(message.toString()).equal('test');
           client2.end(function () {
-            client1.publish('test1883', 'test', { qos: 2 }, function () {
-              // console.log('Published');
-              client2.reconnect();
+            client1.end(function () {
+              done();
             });
-          });
-        } else if (msg.topic === 'clientReady') {
-          // console.log('Client ' + msg.payload.client.id + ' connected with clean ' + msg.payload.client.clean);
-        }
-      });
-      client2.on('message', function (topic, message) {
-        // console.log(message.toString());
-        should(topic.toString()).equal('test1883');
-        should(message.toString()).equal('test');
-        client2.end(function () {
-          client1.end(function () {
-            done();
           });
         });
       });

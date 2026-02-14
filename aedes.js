@@ -19,13 +19,13 @@ module.exports = function (RED) {
   const MongoPersistence = require('aedes-persistence-mongodb');
   // const { Level } = require('level');
   // const LevelPersistence = require('aedes-persistence-level');
-  const aedes = require('aedes');
+  // aedes is ESM-only in v1 -- dynamically imported in initializeBroker()
   const fs = require('fs');
   const net = require('net');
   const tls = require('tls');
   const http = require('http');
   const https = require('https');
-  const ws = require('websocket-stream');
+  const { WebSocketServer, createWebSocketStream } = require('ws');
 
   let serverUpgradeAdded = false;
   const listenerNodes = {};
@@ -51,99 +51,21 @@ module.exports = function (RED) {
     }
   }
 
-  function AedesBrokerNode (config) {
-    RED.nodes.createNode(this, config);
-    this.mqtt_port = parseInt(config.mqtt_port, 10);
-    this.mqtt_ws_port = parseInt(config.mqtt_ws_port, 10);
-    this.mqtt_ws_path = '' + config.mqtt_ws_path;
-    this.mqtt_ws_bind = config.mqtt_ws_bind;
-    this.usetls = config.usetls;
+  async function initializeBroker (node, config, aedesSettings, serverOptions) {
+    const { Aedes } = await import('aedes');
+    const broker = await Aedes.createBroker(aedesSettings);
+    if (node._closing) { broker.close(); return; }
+    node._broker = broker;
 
-    const certPath = config.cert ? config.cert.trim() : '';
-    const keyPath = config.key ? config.key.trim() : '';
-    const caPath = config.ca ? config.ca.trim() : '';
-
-    this.uselocalfiles = config.uselocalfiles;
-    this.dburl = config.dburl;
-
-    if (this.mqtt_ws_bind === 'path') {
-      this.mqtt_ws_port = 0;
-    } else {
-      this.mqtt_ws_path = '';
-    }
-
-    if (certPath.length > 0 || keyPath.length > 0 || caPath.length > 0) {
-      if ((certPath.length > 0) !== (keyPath.length > 0)) {
-        this.valid = false;
-        this.error(RED._('tls.error.missing-file'));
-        return;
-      }
-      try {
-        if (certPath) {
-          this.cert = fs.readFileSync(certPath);
-        }
-        if (keyPath) {
-          this.key = fs.readFileSync(keyPath);
-        }
-        if (caPath) {
-          this.ca = fs.readFileSync(caPath);
-        }
-      } catch (err) {
-        this.valid = false;
-        this.error(err.toString());
-        return;
-      }
-    } else {
-      if (this.credentials) {
-        this.cert = this.credentials.certdata || '';
-        this.key = this.credentials.keydata || '';
-        this.ca = this.credentials.cadata || '';
-      }
-    }
-    if (this.credentials) {
-      this.username = this.credentials.username;
-      this.password = this.credentials.password;
-    }
-
-    if (typeof this.usetls === 'undefined') {
-      this.usetls = false;
-    }
-
-    const node = this;
-
-    const aedesSettings = {};
-    const serverOptions = {};
-
-    if (config.persistence_bind === 'mongodb' && config.dburl) {
-      aedesSettings.persistence = MongoPersistence({
-        url: config.dburl
-      });
-      node.log('Start persistence to MongeDB');
-      /*
-    } else if (config.persistence_bind === 'level') {
-      aedesSettings.persistence = LevelPersistence(new Level('leveldb'));
-      node.log('Start persistence to LevelDB');
-      */
-    }
-
-    if (this.cert && this.key && this.usetls) {
-      serverOptions.cert = this.cert;
-      serverOptions.key = this.key;
-      serverOptions.ca = this.ca;
-    }
-
-    const broker = aedes.createBroker(aedesSettings);
     let server;
-    if (this.usetls) {
+    if (node.usetls) {
       server = tls.createServer(serverOptions, broker.handle);
     } else {
       server = net.createServer(broker.handle);
     }
+    node._server = server;
 
-    let wss = null;
-    let httpServer = null;
-
-    if (this.mqtt_ws_port) {
+    if (node.mqtt_ws_port) {
       // Awkward check since http or ws do not fire an error event in case the port is in use
       const testServer = net.createServer();
       testServer.once('error', function (err) {
@@ -165,17 +87,19 @@ module.exports = function (RED) {
       });
 
       testServer.once('close', function () {
+        let httpServer;
         if (node.usetls) {
           httpServer = https.createServer(serverOptions);
         } else {
           httpServer = http.createServer();
         }
-        wss = ws.createServer(
-          {
-            server: httpServer
-          },
-          broker.handle
-        );
+        node._httpServer = httpServer;
+        const wss = new WebSocketServer({ server: httpServer });
+        wss.on('connection', function (websocket, req) {
+          const stream = createWebSocketStream(websocket);
+          broker.handle(stream, req);
+        });
+        node._wss = wss;
         httpServer.listen(config.mqtt_ws_port, function () {
           node.log(
             'Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port
@@ -187,7 +111,7 @@ module.exports = function (RED) {
       });
     }
 
-    if (this.mqtt_ws_path !== '') {
+    if (node.mqtt_ws_path !== '') {
       if (!serverUpgradeAdded) {
         RED.server.on('upgrade', handleServerUpgrade);
         serverUpgradeAdded = true;
@@ -206,24 +130,23 @@ module.exports = function (RED) {
         node.error(
           RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path })
         );
-        return;
-      }
-      listenerNodes[node.fullPath] = node;
-      const serverOptions_ = {
-        noServer: true
-      };
-      if (RED.settings.webSocketNodeVerifyClient) {
-        serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
-      }
-
-      node.server = ws.createServer(
-        {
+      } else {
+        listenerNodes[node.fullPath] = node;
+        const serverOptions_ = {
           noServer: true
-        },
-        broker.handle
-      );
+        };
+        if (RED.settings.webSocketNodeVerifyClient) {
+          serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
+        }
 
-      node.log('Binding aedes mqtt server on ws path: ' + node.fullPath);
+        node.server = new WebSocketServer(serverOptions_);
+        node.server.on('connection', function (websocket, req) {
+          const stream = createWebSocketStream(websocket);
+          broker.handle(stream, req);
+        });
+
+        node.log('Binding aedes mqtt server on ws path: ' + node.fullPath);
+      }
     }
 
     server.once('error', function (err) {
@@ -244,8 +167,8 @@ module.exports = function (RED) {
       }
     });
 
-    if (this.mqtt_port) {
-      server.listen(this.mqtt_port, function () {
+    if (node.mqtt_port) {
+      server.listen(node.mqtt_port, function () {
         node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
         node.status({
           fill: 'green',
@@ -255,7 +178,7 @@ module.exports = function (RED) {
       });
     }
 
-    if (this.credentials && this.username && this.password) {
+    if (node.credentials && node.username && node.password) {
       broker.authenticate = function (client, username, password, callback) {
         const authorized =
           username === node.username &&
@@ -369,7 +292,7 @@ module.exports = function (RED) {
       for (const subscription of subscriptions) {
         node.send([{
           topic: 'subscribe',
-          payload: { topic: subscription.topic, qos: subscription.qos, client: client }
+          payload: { topic: subscription.topic, qos: subscription.qos, client }
         }, null]);
       }
     });
@@ -378,12 +301,12 @@ module.exports = function (RED) {
       for (const topic of unsubscriptions) {
         node.send([{
           topic: 'unsubscribe',
-          payload: { topic: topic, client: client }
+          payload: { topic, client }
         }, null]);
       }
     });
 
-    if (this.wires && this.wires[1] && this.wires[1].length > 0) {
+    if (node.wires && node.wires[1] && node.wires[1].length > 0) {
       node.log('Publish output wired. Enable broker publish event messages.');
       broker.on('publish', function (packet, client) {
         const msg = {
@@ -400,54 +323,143 @@ module.exports = function (RED) {
     broker.on('closed', function () {
       node.debug('Closed event');
     });
+  }
 
-    this.on('close', function (removed, done) {
+  function AedesBrokerNode (config) {
+    RED.nodes.createNode(this, config);
+    this.mqtt_port = parseInt(config.mqtt_port, 10);
+    this.mqtt_ws_port = parseInt(config.mqtt_ws_port, 10);
+    this.mqtt_ws_path = '' + config.mqtt_ws_path;
+    this.mqtt_ws_bind = config.mqtt_ws_bind;
+    this.usetls = config.usetls;
+
+    const certPath = config.cert ? config.cert.trim() : '';
+    const keyPath = config.key ? config.key.trim() : '';
+    const caPath = config.ca ? config.ca.trim() : '';
+
+    this.uselocalfiles = config.uselocalfiles;
+    this.dburl = config.dburl;
+
+    if (this.mqtt_ws_bind === 'path') {
+      this.mqtt_ws_port = 0;
+    } else {
+      this.mqtt_ws_path = '';
+    }
+
+    if (certPath.length > 0 || keyPath.length > 0 || caPath.length > 0) {
+      if ((certPath.length > 0) !== (keyPath.length > 0)) {
+        this.valid = false;
+        this.error(RED._('tls.error.missing-file'));
+        return;
+      }
+      try {
+        if (certPath) {
+          this.cert = fs.readFileSync(certPath);
+        }
+        if (keyPath) {
+          this.key = fs.readFileSync(keyPath);
+        }
+        if (caPath) {
+          this.ca = fs.readFileSync(caPath);
+        }
+      } catch (err) {
+        this.valid = false;
+        this.error(err.toString());
+        return;
+      }
+    } else {
+      if (this.credentials) {
+        this.cert = this.credentials.certdata || '';
+        this.key = this.credentials.keydata || '';
+        this.ca = this.credentials.cadata || '';
+      }
+    }
+    if (this.credentials) {
+      this.username = this.credentials.username;
+      this.password = this.credentials.password;
+    }
+
+    if (typeof this.usetls === 'undefined') {
+      this.usetls = false;
+    }
+
+    const node = this;
+
+    const aedesSettings = {};
+    const serverOptions = {};
+
+    if (config.persistence_bind === 'mongodb' && config.dburl) {
+      aedesSettings.persistence = MongoPersistence({
+        url: config.dburl
+      });
+      node.log('Start persistence to MongoDB');
+      /*
+    } else if (config.persistence_bind === 'level') {
+      aedesSettings.persistence = LevelPersistence(new Level('leveldb'));
+      node.log('Start persistence to LevelDB');
+      */
+    }
+
+    if (this.cert && this.key && this.usetls) {
+      serverOptions.cert = this.cert;
+      serverOptions.key = this.key;
+      serverOptions.ca = this.ca;
+    }
+
+    node._closing = false;
+    node._broker = null;
+    node._server = null;
+    node._wss = null;
+    node._httpServer = null;
+
+    node._initPromise = initializeBroker(node, config, aedesSettings, serverOptions);
+    node._initPromise.catch(function (err) {
+      node.error('Failed to initialize Aedes broker: ' + err.toString());
+      node.status({ fill: 'red', shape: 'ring', text: 'initialization failed' });
+    });
+
+    this.on('close', async function (removed, done) {
+      node._closing = true;
       if (removed) {
         node.debug('Node removed or disabled');
       } else {
         node.debug('Node restarting');
       }
-      process.nextTick(function onCloseDelayed () {
-        function wsClose () {
-          if (wss) {
-            node.log(
-              'Unbinding aedes mqtt server from ws port: ' + config.mqtt_ws_port
-            );
-            wss.close(function () {
-              node.debug('after wss.close(): ');
-              httpServer.close(function () {
-                node.debug('after httpServer.close(): ');
-                done();
-              });
-            });
-          } else {
-            done();
-          }
-        }
+      try {
+        await node._initPromise;
+        closeBroker(node, done);
+      } catch (e) {
+        done();
+      }
+    });
+  }
 
-        function brokerClose () {
-          broker.close(function () {
-            node.log(
-              'Unbinding aedes mqtt server from port: ' + config.mqtt_port
-            );
-            server.close(function () {
-              node.debug('after server.close(): ');
-              if (node.mqtt_ws_path !== '') {
-                node.log(
-                  'Unbinding aedes mqtt server from ws path: ' + node.fullPath
-                );
-                delete listenerNodes[node.fullPath];
-                node.server.close(function () {
-                  wsClose();
-                });
-              } else {
-                wsClose();
-              }
-            });
+  function closeBroker (node, done) {
+    process.nextTick(function () {
+      function wsClose () {
+        if (node._wss) {
+          node._wss.close(function () {
+            if (node._httpServer) {
+              node._httpServer.close(function () { done(); });
+            } else { done(); }
           });
-        }
-        brokerClose();
-      });
+        } else { done(); }
+      }
+      function serverClose () {
+        if (node._server) {
+          node._server.close(function () {
+            if (node.mqtt_ws_path !== '' && node.fullPath) {
+              delete listenerNodes[node.fullPath];
+              if (node.server) {
+                node.server.close(function () { wsClose(); });
+              } else { wsClose(); }
+            } else { wsClose(); }
+          });
+        } else { wsClose(); }
+      }
+      if (node._broker) {
+        node._broker.close(function () { serverClose(); });
+      } else { serverClose(); }
     });
   }
 

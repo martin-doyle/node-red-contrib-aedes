@@ -3,13 +3,15 @@
   "version": "0.15.0",
   "description": "Node Red MQTT broker node based on aedes.js",
   "dependencies": {
-    "aedes": "^0.51.3",
+    "aedes": "^1.0.0",
     "aedes-persistence-mongodb": "^9.3.0",
-    "websocket-stream": "^5.5.2"
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "mqtt": "^5.13.1",
-    "node-red-node-test-helper": "^0.3.3"
+    "node-red-node-test-helper": "^0.3.3",
+    "semistandard": "^17.0.0",
+    "snazzy": "^9.0.0"
   },
   "scripts": {
     "patch": "npm --no-git-tag-version version patch",

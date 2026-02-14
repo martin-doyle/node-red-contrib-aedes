@@ -17,6 +17,45 @@ describe('Aedes Broker Websocket tests', function () {
     });
   });
 
+  it('should connect an external ws mqtt client', function (done) {
+    this.timeout(10000);
+    const flow = [
+      {
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        mqtt_ws_port: '8080',
+        name: 'Aedes 1883',
+        wires: [['n2'], []]
+      },
+      {
+        id: 'n2',
+        type: 'helper'
+      }
+    ];
+    helper.load(aedesNode, flow, function () {
+      const n1 = helper.getNode('n1');
+      n1._initPromise.then(function () {
+        const client = mqtt.connect('ws://localhost:8080', {
+          clientId: 'ws-client',
+          resubscribe: false,
+          reconnectPeriod: -1
+        });
+        client.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        const n2 = helper.getNode('n2');
+        n2.on('input', function (msg) {
+          if (msg.topic === 'clientReady') {
+            client.end(function () {
+              done();
+            });
+          }
+        });
+      });
+    });
+  });
+
   it('should not throw an exception with 2 servers on the same ws port', function (done) {
     this.timeout(10000); // have to wait for the inject with delay of two seconds
 
@@ -87,25 +126,28 @@ describe('Aedes Broker Websocket tests', function () {
       }
     ];
     helper.load([aedesNode, mqttNode], flow, function () {
-      const client = mqtt.connect('ws://localhost:8080', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-      client.on('error', function (err) {
-        console.error('Error: ', err.toString());
-      });
-      client.on('connect', function () {
-        // console.log('External client connected');
-      });
-      const n2 = helper.getNode('n2');
-      const n5 = helper.getNode('n5');
-      n2.on('input', function (msg) {
-        if (msg.topic === 'subscribe') {
-          client.publish('test1883', 'test');
-        }
-      });
-      n5.on('input', function (msg) {
-        // console.log(msg);
-        msg.should.have.property('topic', 'test1883');
-        client.end(function () {
-          done();
+      const n1 = helper.getNode('n1');
+      n1._initPromise.then(function () {
+        const client = mqtt.connect('ws://localhost:8080', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+        client.on('error', function (err) {
+          console.error('Error: ', err.toString());
+        });
+        client.on('connect', function () {
+          // console.log('External client connected');
+        });
+        const n2 = helper.getNode('n2');
+        const n5 = helper.getNode('n5');
+        n2.on('input', function (msg) {
+          if (msg.topic === 'subscribe') {
+            client.publish('test1883', 'test');
+          }
+        });
+        n5.on('input', function (msg) {
+          // console.log(msg);
+          msg.should.have.property('topic', 'test1883');
+          client.end(function () {
+            done();
+          });
         });
       });
     });
@@ -150,25 +192,28 @@ describe('Aedes Broker Websocket tests', function () {
     ];
 
     helper.load([aedesNode, mqttNode], flow, function () {
-      const client = mqtt.connect(helper.url().replace(/http/, 'ws') + '/mqtt', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-      client.on('error', function (err) {
-        console.error('Client on error: ', err.toString());
-      });
-      client.on('connect', function () {
-        // console.log('External client connected');
-      });
-      const n2 = helper.getNode('n2');
-      const n5 = helper.getNode('n5');
-      n2.on('input', function (msg) {
-        if (msg.topic === 'subscribe') {
-          client.publish('test1883', 'test');
-        }
-      });
-      n5.on('input', function (msg) {
-        // console.log(msg);
-        msg.should.have.property('topic', 'test1883');
-        client.end(function () {
-          done();
+      const n1 = helper.getNode('n1');
+      n1._initPromise.then(function () {
+        const client = mqtt.connect(helper.url().replace(/http/, 'ws') + '/mqtt', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
+        client.on('error', function (err) {
+          console.error('Client on error: ', err.toString());
+        });
+        client.on('connect', function () {
+          // console.log('External client connected');
+        });
+        const n2 = helper.getNode('n2');
+        const n5 = helper.getNode('n5');
+        n2.on('input', function (msg) {
+          if (msg.topic === 'subscribe') {
+            client.publish('test1883', 'test');
+          }
+        });
+        n5.on('input', function (msg) {
+          // console.log(msg);
+          msg.should.have.property('topic', 'test1883');
+          client.end(function () {
+            done();
+          });
         });
       });
     });
