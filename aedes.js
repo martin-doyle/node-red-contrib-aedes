@@ -286,7 +286,7 @@ module.exports = function (RED) {
       for (const subscription of subscriptions) {
         node.send([{
           topic: 'subscribe',
-          payload: { topic: subscription.topic, qos: subscription.qos, client: client }
+          payload: { topic: subscription.topic, qos: subscription.qos, client }
         }, null]);
       }
     });
@@ -295,7 +295,7 @@ module.exports = function (RED) {
       for (const topic of unsubscriptions) {
         node.send([{
           topic: 'unsubscribe',
-          payload: { topic: topic, client: client }
+          payload: { topic, client }
         }, null]);
       }
     });
