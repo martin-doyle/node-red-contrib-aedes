@@ -324,7 +324,12 @@ module.exports = function (RED) {
       node.debug('Closed event');
     });
 
-    this.on('close', function (done) {
+    this.on('close', function (removed, done) {
+      if (removed) {
+        node.debug('Node removed or disabled');
+      } else {
+        node.debug('Node restarting');
+      }
       process.nextTick(function onCloseDelayed () {
         function wsClose () {
           if (wss) {
