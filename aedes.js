@@ -282,28 +282,22 @@ module.exports = function (RED) {
       });
     });
 
-    broker.on('subscribe', function (subscription, client) {
-      const msg = {
-        topic: 'subscribe',
-        payload: {
-          topic: subscription.topic,
-          qos: subscription.qos,
-          client
-        }
-      };
-      node.send([msg, null]);
+    broker.on('subscribe', function (subscriptions, client) {
+      for (const subscription of subscriptions) {
+        node.send([{
+          topic: 'subscribe',
+          payload: { topic: subscription.topic, qos: subscription.qos, client: client }
+        }, null]);
+      }
     });
 
-    broker.on('unsubscribe', function (subscription, client) {
-      const msg = {
-        topic: 'unsubscribe',
-        payload: {
-          topic: subscription.topic,
-          qos: subscription.qos,
-          client
-        }
-      };
-      node.send([msg, null]);
+    broker.on('unsubscribe', function (unsubscriptions, client) {
+      for (const topic of unsubscriptions) {
+        node.send([{
+          topic: 'unsubscribe',
+          payload: { topic: topic, client: client }
+        }, null]);
+      }
     });
 
     if (this.wires && this.wires[1] && this.wires[1].length > 0) {
