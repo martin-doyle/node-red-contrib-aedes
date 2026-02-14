@@ -113,6 +113,7 @@ dist
 /data/
 /leveldb/
 .DS_Store
+docs/*
 
 # package-lock.json
 package-lock.json
