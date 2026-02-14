@@ -130,7 +130,7 @@
              <!--     <option value="level" data-i18n="aedes-mqtt-broker.label.persistence_level"></option> -->
               </select>
           </div>
-          <div class="form-row" id="node-row-dburl" class="hide">
+          <div class="form-row hide" id="node-row-dburl">
               <label for="node-input-dburl"><i class="fa fa-database"></i> <span
                       data-i18n="aedes-mqtt-broker.label.dburl"></label>
               <input type="text" id="node-input-dburl" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.dburl">
@@ -331,7 +331,7 @@
       $('#tls-button-key-clear').on('click', function () {
         clearNameData('key');
       });
-      $("#tls-config-button-ca-clear").on("click", function() {
+      $("#tls-button-ca-clear").on("click", function() {
         clearNameData("ca");
       });
 
@@ -360,9 +360,11 @@
         $('#node-input-tls').val('');
       }
       if ($("#node-input-uselocalfiles").is(':checked')) {
-          clearNameData("ca");
-          clearNameData("cert");
-          clearNameData("key");
+          ['ca', 'cert', 'key'].forEach(function (prop) {
+            $('#tls-' + prop + 'name').text('');
+            $('#node-input-' + prop + 'data').val('');
+            $('#node-input-' + prop + 'name').val('');
+          });
       } else {
           $("#node-input-ca").val("");
           $("#node-input-cert").val("");
