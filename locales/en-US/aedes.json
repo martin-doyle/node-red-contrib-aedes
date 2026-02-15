@@ -2,10 +2,19 @@
   "aedes-mqtt-broker": {
     "status": {
       "connected": "connected __count__",
-      "connected_plural": "connected __count__"
+      "connected_plural": "connected __count__",
+      "disconnected": "disconnected",
+      "error": "error",
+      "init-failed": "initialization failed"
+    },
+    "error": {
+      "port-in-use": "Error: Port __port__ is already in use",
+      "server-error": "Error creating server on port __port__: __error__",
+      "init-failed": "Failed to initialize Aedes broker: __error__"
     },
     "label": {
       "mqtt_port": "MQTT port",
+      "mqtt_ws_bind": "WS bind",
       "mqtt_ws_port": "WS port",
       "mqtt_ws_path": "WS path",
       "use-tls": "Enable secure (SSL/TLS) connection",

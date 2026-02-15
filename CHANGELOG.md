@@ -1,8 +1,14 @@
 # node-red-contrib-aedes Changelog
 
+## Feb 15, 2026, Version 1.1.0
+### Notable changes
+- Improved help documentation
+- Improved UI
+- Added German locale (de)
+
 ## Feb 14, 2026, Version 1.0.0
 ### Notable changes
- Update aedes to version 1.0.0
+- Update aedes to version 1.0.0
 
 ## Jul 22, 2025, Version 0.15.0
 ### Notable changes

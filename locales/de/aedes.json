@@ -1,0 +1,50 @@
+{
+  "aedes-mqtt-broker": {
+    "status": {
+      "connected": "verbunden __count__",
+      "connected_plural": "verbunden __count__",
+      "disconnected": "getrennt",
+      "error": "Fehler",
+      "init-failed": "Initialisierung fehlgeschlagen"
+    },
+    "error": {
+      "port-in-use": "Fehler: Port __port__ wird bereits verwendet",
+      "server-error": "Fehler beim Erstellen des Servers auf Port __port__: __error__",
+      "init-failed": "Aedes Broker konnte nicht initialisiert werden: __error__"
+    },
+    "label": {
+      "mqtt_port": "MQTT-Port",
+      "mqtt_ws_bind": "WS-Bindung",
+      "mqtt_ws_port": "WS-Port",
+      "mqtt_ws_path": "WS-Pfad",
+      "use-tls": "Sichere Verbindung (SSL/TLS) aktivieren",
+      "use-local-files": "Lokale Dateien verwenden",
+      "tls-config": "TLS-Konfiguration",
+      "upload": "Hochladen",
+      "cert": "Zertifikat",
+      "key": "Privater Schlüssel",
+      "ca": "CA-Zertifikat",
+      "persistence_bind": "Persistenz",
+      "persistence_memory": "Speicher",
+      "persistence_mongodb": "MongoDB",
+      "persistence_level": "LevelDB",
+      "dburl": "DB-URL"
+    },
+    "placeholder": {
+      "mqtt_port": "MQTT-Port eingeben",
+      "mqtt_ws_port": "WebSocket-Port eingeben. Leer lassen um WebSocket zu deaktivieren",
+      "mqtt_ws_path": "WebSocket-Pfad eingeben. Leer lassen um WebSocket zu deaktivieren",
+      "cert": "Pfad zum Zertifikat (PEM-Format)",
+      "key": "Pfad zum privaten Schlüssel (PEM-Format)",
+      "ca": "Pfad zum CA-Zertifikat (PEM-Format)",
+      "dburl": "mongodb://localhost:27017/mqtt",
+      "username": "Leer lassen um Authentifizierung zu deaktivieren",
+      "password": "Leer lassen um Authentifizierung zu deaktivieren"
+    },
+    "tabs-label": {
+      "connection": "Verbindung",
+      "persistence": "Persistenz",
+      "security": "Sicherheit"
+    }
+  }
+}

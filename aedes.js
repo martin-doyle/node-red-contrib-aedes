@@ -71,16 +71,14 @@ module.exports = function (RED) {
       testServer.once('error', function (err) {
         if (err.code === 'EADDRINUSE') {
           node.error(
-            'Error: Port ' + config.mqtt_ws_port + ' is already in use'
+            RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_ws_port })
           );
         } else {
           node.error(
-            'Error creating net server on port ' +
-              config.mqtt_ws_port +
-              ', ' +
-              err.toString()
+            RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_ws_port, error: err.toString() })
           );
         }
+        node.status({ fill: 'red', shape: 'ring', text: 'aedes-mqtt-broker.status.error' });
       });
       testServer.once('listening', function () {
         testServer.close();
@@ -151,20 +149,19 @@ module.exports = function (RED) {
 
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
-        node.error('Error: Port ' + config.mqtt_port + ' is already in use');
-        node.status({
-          fill: 'red',
-          shape: 'ring',
-          text: 'node-red:common.status.disconnected'
-        });
+        node.error(
+          RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_port })
+        );
       } else {
-        node.error('Error: Port ' + config.mqtt_port + ' ' + err.toString());
-        node.status({
-          fill: 'red',
-          shape: 'ring',
-          text: 'node-red:common.status.disconnected'
-        });
+        node.error(
+          RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_port, error: err.toString() })
+        );
       }
+      node.status({
+        fill: 'red',
+        shape: 'ring',
+        text: 'aedes-mqtt-broker.status.error'
+      });
     });
 
     if (node.mqtt_port) {
@@ -414,8 +411,8 @@ module.exports = function (RED) {
 
     node._initPromise = initializeBroker(node, config, aedesSettings, serverOptions);
     node._initPromise.catch(function (err) {
-      node.error('Failed to initialize Aedes broker: ' + err.toString());
-      node.status({ fill: 'red', shape: 'ring', text: 'initialization failed' });
+      node.error(RED._('aedes-mqtt-broker.error.init-failed', { error: err.toString() }));
+      node.status({ fill: 'red', shape: 'ring', text: 'aedes-mqtt-broker.status.init-failed' });
     });
 
     this.on('close', async function (removed, done) {

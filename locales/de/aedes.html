@@ -1,0 +1,110 @@
+<script type="text/x-red" data-help-name="aedes broker">
+    <p>Ein eingebetteter MQTT-Broker basierend auf <a href="https://github.com/moscajs/aedes">Aedes</a>.
+    Ermöglicht MQTT-in- und MQTT-out-Nodes die Kommunikation ohne einen externen Broker wie Mosquitto.</p>
+
+    <h3>Ausgänge</h3>
+    <ol class="node-ports">
+        <li>Ereignisse
+            <dl class="message-properties">
+                <dt>topic <span class="property-type">string</span></dt>
+                <dd>Der Name des Ereignisses (siehe Tabelle unten).</dd>
+                <dt>payload <span class="property-type">object</span></dt>
+                <dd>Ereignisspezifische Daten mit Client-Informationen und ggf. Fehler- oder Abonnement-Details.</dd>
+            </dl>
+        </li>
+        <li>Publish
+            <dl class="message-properties">
+                <dt>topic <span class="property-type">string</span></dt>
+                <dd>immer <code>"publish"</code>.</dd>
+                <dt>payload.packet <span class="property-type">object</span></dt>
+                <dd>Das MQTT-Paket mit den Eigenschaften <code>topic</code>, <code>payload</code>, <code>qos</code> und <code>retain</code>.</dd>
+                <dt>payload.client <span class="property-type">object | null</span></dt>
+                <dd>Der Client, der die Nachricht gesendet hat, oder <code>null</code> bei Broker-eigenen Nachrichten.</dd>
+            </dl>
+        </li>
+    </ol>
+    <p><strong>Hinweis:</strong> Der Publish-Ausgang ist nur aktiv, wenn er mit einem anderen Node verbunden ist.
+    Dies vermeidet unnötige Verarbeitung, wenn Publish-Nachrichten nicht benötigt werden.</p>
+
+    <h3>Details</h3>
+    <p>Dieser Node startet einen MQTT-Broker innerhalb des Node-RED-Prozesses. MQTT-Clients,
+    einschließlich der integrierten MQTT-in- und MQTT-out-Nodes, können sich über den
+    konfigurierten Port (Standard <code>1883</code>) verbinden.</p>
+
+    <h4>Verbindung</h4>
+    <p>Konfigurieren Sie den MQTT-TCP-Port und den optionalen WebSocket-Zugang. WebSocket-Verbindungen
+    können auf zwei Arten bereitgestellt werden:</p>
+    <ul>
+        <li><b>Port</b> &ndash; ein eigenständiger WebSocket-Server auf einem separaten Port.</li>
+        <li><b>Pfad</b> &ndash; nutzt den Node-RED-HTTP-Server unter einem URL-Pfad
+        (relativ zu <code>httpNodeRoot</code>).</li>
+    </ul>
+    <p>Aktivieren Sie <i>SSL/TLS</i> um Verbindungen abzusichern. Zertifikate können
+    direkt hochgeladen oder als lokale Dateipfade auf dem Server angegeben werden.</p>
+
+    <h4>Persistenz</h4>
+    <p>Standardmäßig werden Nachrichten und Abonnements im Speicher gehalten und gehen
+    bei einem Neustart verloren. Wählen Sie <i>MongoDB</i> um Daten über Neustarts
+    hinweg zu persistieren.</p>
+
+    <h4>Sicherheit</h4>
+    <p>Legen Sie einen Benutzernamen und ein Passwort fest, um eine Client-Authentifizierung
+    zu erzwingen. Lassen Sie beide Felder leer, um anonyme Verbindungen zu erlauben.
+    Es wird nur ein einzelnes Zugangsdatenpaar unterstützt.</p>
+
+    <h4>Ereignis-Topics</h4>
+    <p>Der erste Ausgang sendet folgende Ereignisse:</p>
+    <table>
+        <thead>
+            <tr><th>Topic</th><th>Payload</th><th>Beschreibung</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>client</code></td>
+                <td><code>{ client }</code></td>
+                <td>Ein neuer Client hat sich verbunden (vor der Authentifizierung).</td>
+            </tr>
+            <tr>
+                <td><code>clientReady</code></td>
+                <td><code>{ client }</code></td>
+                <td>Ein Client hat sich verbunden, ist authentifiziert und bereit.</td>
+            </tr>
+            <tr>
+                <td><code>clientDisconnect</code></td>
+                <td><code>{ client }</code></td>
+                <td>Ein Client hat sich ordnungsgemäß getrennt.</td>
+            </tr>
+            <tr>
+                <td><code>clientError</code></td>
+                <td><code>{ client, err }</code></td>
+                <td>Bei einer Client-Verbindung ist ein Fehler aufgetreten.</td>
+            </tr>
+            <tr>
+                <td><code>connectionError</code></td>
+                <td><code>{ client, err }</code></td>
+                <td>Ein Fehler auf Verbindungsebene ist aufgetreten.</td>
+            </tr>
+            <tr>
+                <td><code>keepaliveTimeout</code></td>
+                <td><code>{ client }</code></td>
+                <td>Ein Client wurde wegen Keepalive-Timeout getrennt.</td>
+            </tr>
+            <tr>
+                <td><code>subscribe</code></td>
+                <td><code>{ topic, qos, client }</code></td>
+                <td>Ein Client hat ein Topic abonniert. Pro Abonnement wird eine Nachricht gesendet.</td>
+            </tr>
+            <tr>
+                <td><code>unsubscribe</code></td>
+                <td><code>{ topic, client }</code></td>
+                <td>Ein Client hat ein Topic-Abonnement beendet. Pro Abmeldung wird eine Nachricht gesendet.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Referenzen</h3>
+    <ul>
+        <li><a href="https://github.com/moscajs/aedes">Aedes</a> - die zugrunde liegende MQTT-Broker-Bibliothek</li>
+        <li><a href="https://github.com/martin-doyle/node-red-contrib-aedes">node-red-contrib-aedes</a> - GitHub-Repository</li>
+    </ul>
+</script>

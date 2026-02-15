@@ -89,6 +89,35 @@ describe('Aedes Broker Websocket tests', function () {
     });
   });
 
+  it('should set error status when ws port is already in use', function (done) {
+    this.timeout(10000);
+    const net = require('net');
+    const blocker = net.createServer();
+    blocker.listen(8081, function () {
+      const flow = [{
+        id: 'n1',
+        type: 'aedes broker',
+        mqtt_port: '1883',
+        mqtt_ws_port: '8081',
+        name: 'Aedes WS Error',
+        wires: [[], []]
+      }];
+      helper.load(aedesNode, flow, function () {
+        const n1 = helper.getNode('n1');
+        n1.on('call:status', function (call) {
+          if (call.args[0].fill === 'red') {
+            call.args[0].should.have.property('fill', 'red');
+            call.args[0].should.have.property('shape', 'ring');
+            call.args[0].should.have.property('text', 'aedes-mqtt-broker.status.error');
+            blocker.close(function () {
+              done();
+            });
+          }
+        });
+      });
+    });
+  });
+
   it('a subscriber should receive a message from an external ws publisher', function (done) {
     this.timeout(10000); // have to wait for the inject with delay of 10 seconds
     const flow = [
