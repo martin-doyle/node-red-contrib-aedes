@@ -25,27 +25,28 @@
   <div id="node-config-aedes-broker-tabs-content" style="min-height:150px;">
       <div id="aedes-broker-tab-connection" style="display:none">
           <div class="form-row">
-              <label for="node-input-mqtt_port"><i class="fa fa-globe"></i> <span
+              <label for="node-input-mqtt_port"><i class="fa fa-plug"></i> <span
                       data-i18n="aedes-mqtt-broker.label.mqtt_port"></span></label>
               <input type="text" id="node-input-mqtt_port"
                   data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_port">
           </div>
           <div class="form-row">
-              <label for="node-input-mqtt_ws_bind"><i class="fa fa-globe"></i> WS bind</label>
-              <select id="node-input-mqtt_ws_bind" type="text" style="width:30%" text-center>
+              <label for="node-input-mqtt_ws_bind"><i class="fa fa-exchange"></i> <span
+                      data-i18n="aedes-mqtt-broker.label.mqtt_ws_bind"></span></label>
+              <select id="node-input-mqtt_ws_bind" type="text" style="width:30%; text-align:center;">
                   <option value="path" default>path</option>
                   <option value="port">port</option>
               </select>
           </div>
           <div class="form-row" id="node-input-mqtt_ws_path-label">
-              <label for="node-input-mqtt_ws_path"><i class="fa fa-globe"></i> <span
-                      data-i18n="aedes-mqtt-broker.label.mqtt_ws_path"></label>
+              <label for="node-input-mqtt_ws_path"><i class="fa fa-link"></i> <span
+                      data-i18n="aedes-mqtt-broker.label.mqtt_ws_path"></span></label>
               <input type="text" id="node-input-mqtt_ws_path"
                   data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_path">
           </div>
           <div class="form-row" id="node-input-mqtt_ws_port-label">
-              <label for="node-input-mqtt_ws_port"><i class="fa fa-globe"></i> <span
-                      data-i18n="aedes-mqtt-broker.label.mqtt_ws_port"></label>
+              <label for="node-input-mqtt_ws_port"><i class="fa fa-plug"></i> <span
+                      data-i18n="aedes-mqtt-broker.label.mqtt_ws_port"></span></label>
               <input type="text" id="node-input-mqtt_ws_port"
                   data-i18n="[placeholder]aedes-mqtt-broker.placeholder.mqtt_ws_port">
           </div>
@@ -58,7 +59,7 @@
                       <input type="checkbox" id="node-input-uselocalfiles"
                           style="display: inline-block; width: auto; vertical-align: top;">
                       <label for="node-input-uselocalfiles" style="width: 70%;"><span
-                              data-i18n="aedes-mqtt-broker.label.use-local-files"></label>
+                              data-i18n="aedes-mqtt-broker.label.use-local-files"></span></label>
                   </div>
 
                   <div class="form-row">
@@ -122,9 +123,9 @@
       </div>
       <div id="aedes-broker-tab-persistence" style="display:none">
           <div class="form-row">
-              <label for="node-input-persistence_bind"><i class="fa fa-globe"></i> <span
-                      data-i18n="aedes-mqtt-broker.label.persistence_bind"></label>
-              <select id="node-input-persistence_bind" type="text" style="width:30%" text-center>
+              <label for="node-input-persistence_bind"><i class="fa fa-hdd-o"></i> <span
+                      data-i18n="aedes-mqtt-broker.label.persistence_bind"></span></label>
+              <select id="node-input-persistence_bind" type="text" style="width:30%; text-align:center;">
                   <option value="memory" data-i18n="aedes-mqtt-broker.label.persistence_memory" default></option>
                   <option value="mongodb" data-i18n="aedes-mqtt-broker.label.persistence_mongodb"></option>
              <!--     <option value="level" data-i18n="aedes-mqtt-broker.label.persistence_level"></option> -->
@@ -132,7 +133,7 @@
           </div>
           <div class="form-row hide" id="node-row-dburl">
               <label for="node-input-dburl"><i class="fa fa-database"></i> <span
-                      data-i18n="aedes-mqtt-broker.label.dburl"></label>
+                      data-i18n="aedes-mqtt-broker.label.dburl"></span></label>
               <input type="text" id="node-input-dburl" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.dburl">
           </div>
       </div>
@@ -157,9 +158,16 @@
     category: 'network',
     defaults: {
       name: { value: '' },
-      mqtt_port: { value: 1883, validate: RED.validators.number() },
+      mqtt_port: { value: 1883, validate: function (v) {
+        var n = parseInt(v, 10);
+        return !isNaN(n) && n >= 1 && n <= 65535;
+      }},
       mqtt_ws_bind: { value: 'port', required: true },
-      mqtt_ws_port: { value: null, required: false, validate: RED.validators.number(true) },
+      mqtt_ws_port: { value: null, required: false, validate: function (v) {
+        if (v === '' || v === null || v === undefined) return true;
+        var n = parseInt(v, 10);
+        return !isNaN(n) && n >= 1 && n <= 65535;
+      }},
       mqtt_ws_path: { value: '', required: false },
       cert: {
         value: '',

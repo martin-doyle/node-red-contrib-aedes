@@ -1,18 +1,109 @@
 <script type="text/x-red" data-help-name="aedes broker">
-    <p>MQTT broker based on Barebone MQTT broker Aedes. You can use MQTT-in and MQTT-out nodes without an external broker like Mosquitto.</p>
-    <h3>Outputs</h3>
-        <dl class="message-properties">
-            <dt>topic <span class="property-type">string</span></dt>
-            <dd>the topic of the event.</dd>
-            <dt>payload 1<span class="property-type">object</span></dt>
-            <dd>the content of all events from the broker except publish.</dd>
-            <dt>payload 2<span class="property-type">object</span></dt>
-            <dd>the content of the publish events from the broker.</dd>
+    <p>An embedded MQTT broker based on <a href="https://github.com/moscajs/aedes">Aedes</a>.
+    Allows MQTT-in and MQTT-out nodes to communicate without an external broker like Mosquitto.</p>
 
-        </dl>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>Events
+            <dl class="message-properties">
+                <dt>topic <span class="property-type">string</span></dt>
+                <dd>the name of the event (see table below).</dd>
+                <dt>payload <span class="property-type">object</span></dt>
+                <dd>event-specific data containing client information and, where applicable, error or subscription details.</dd>
+            </dl>
+        </li>
+        <li>Publish
+            <dl class="message-properties">
+                <dt>topic <span class="property-type">string</span></dt>
+                <dd>always <code>"publish"</code>.</dd>
+                <dt>payload.packet <span class="property-type">object</span></dt>
+                <dd>the MQTT packet with <code>topic</code>, <code>payload</code>, <code>qos</code>, and <code>retain</code> properties.</dd>
+                <dt>payload.client <span class="property-type">object | null</span></dt>
+                <dd>the client that published the message, or <code>null</code> for broker-originated messages.</dd>
+            </dl>
+        </li>
+    </ol>
+    <p><strong>Note:</strong> The publish output is only active when it is wired to another node.
+    This avoids unnecessary processing when publish messages are not needed.</p>
+
     <h3>Details</h3>
+    <p>This node starts an MQTT broker inside the Node-RED process. MQTT clients,
+    including the built-in MQTT-in and MQTT-out nodes, can connect to it on the
+    configured port (default <code>1883</code>).</p>
+
+    <h4>Connection</h4>
+    <p>Configure the MQTT TCP port and optional WebSocket access. WebSocket
+    connections can be exposed in two ways:</p>
+    <ul>
+        <li><b>Port</b> &ndash; a standalone WebSocket server on a separate port.</li>
+        <li><b>Path</b> &ndash; shares the Node-RED HTTP server under a URL path
+        (relative to <code>httpNodeRoot</code>).</li>
+    </ul>
+    <p>Enable <i>SSL/TLS</i> to secure connections. Certificates can be uploaded
+    directly or referenced as local file paths on the server.</p>
+
+    <h4>Persistence</h4>
+    <p>By default messages and subscriptions are stored in memory and lost on
+    restart. Select <i>MongoDB</i> to persist data across restarts.</p>
+
+    <h4>Security</h4>
+    <p>Set a username and password to require client authentication.
+    Leave both fields blank to allow anonymous connections.
+    Only a single set of credentials is supported.</p>
+
+    <h4>Event Topics</h4>
+    <p>The first output emits the following events:</p>
+    <table>
+        <thead>
+            <tr><th>topic</th><th>payload</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>client</code></td>
+                <td><code>{ client }</code></td>
+                <td>A new client has connected (before authentication).</td>
+            </tr>
+            <tr>
+                <td><code>clientReady</code></td>
+                <td><code>{ client }</code></td>
+                <td>A client has connected and is authenticated and ready.</td>
+            </tr>
+            <tr>
+                <td><code>clientDisconnect</code></td>
+                <td><code>{ client }</code></td>
+                <td>A client has gracefully disconnected.</td>
+            </tr>
+            <tr>
+                <td><code>clientError</code></td>
+                <td><code>{ client, err }</code></td>
+                <td>An error occurred on a client connection.</td>
+            </tr>
+            <tr>
+                <td><code>connectionError</code></td>
+                <td><code>{ client, err }</code></td>
+                <td>A connection-level error occurred.</td>
+            </tr>
+            <tr>
+                <td><code>keepaliveTimeout</code></td>
+                <td><code>{ client }</code></td>
+                <td>A client has been disconnected due to keepalive timeout.</td>
+            </tr>
+            <tr>
+                <td><code>subscribe</code></td>
+                <td><code>{ topic, qos, client }</code></td>
+                <td>A client has subscribed to a topic. One message is sent per subscription.</td>
+            </tr>
+            <tr>
+                <td><code>unsubscribe</code></td>
+                <td><code>{ topic, client }</code></td>
+                <td>A client has unsubscribed from a topic. One message is sent per unsubscription.</td>
+            </tr>
+        </tbody>
+    </table>
+
     <h3>References</h3>
-        <ul>
-            <li><a href="https://github.com/moscajs/aedes">Aedes</a> - Barebone MQTT broker that can run on any stream server, the node way</li>
-        </ul>
+    <ul>
+        <li><a href="https://github.com/moscajs/aedes">Aedes</a> - the underlying MQTT broker library</li>
+        <li><a href="https://github.com/martin-doyle/node-red-contrib-aedes">node-red-contrib-aedes</a> - GitHub repository</li>
+    </ul>
 </script>
