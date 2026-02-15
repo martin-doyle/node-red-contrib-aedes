@@ -114,6 +114,7 @@ dist
 /leveldb/
 .DS_Store
 docs/*
+CLAUDE.md
 
 # package-lock.json
 package-lock.json
