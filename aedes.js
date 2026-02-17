@@ -162,7 +162,10 @@ module.exports = function (RED) {
         node._persistEnabled = true;
 
         // Load existing snapshot (must await so _initPromise resolves after restore)
-        await loadSnapshot(node._broker, persistFile, node);
+        node._loadPromise = loadSnapshot(node._broker, persistFile, node);
+        node._loadPromise.catch(function (err) {
+          node.warn('aedes: failed to load snapshot: ' + err.message);
+        });
 
         // Periodic save every 60 seconds (with guard against concurrent saves)
         let saving = false;
@@ -292,6 +295,8 @@ module.exports = function (RED) {
         });
       });
     }
+
+    await node._loadPromise;
 
     if (node.credentials && node.username && node.password) {
       broker.authenticate = function (client, username, password, callback) {
