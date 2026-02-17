@@ -523,6 +523,16 @@ module.exports = function (RED) {
       }
       try {
         await node._initPromise;
+        // Stop periodic snapshot interval
+        if (node._snapshotInterval) {
+          clearInterval(node._snapshotInterval);
+          node._snapshotInterval = null;
+        }
+
+        // Save final snapshot on shutdown
+        if (node._persistEnabled && node._broker) {
+          await saveSnapshot(node._broker, node._trackedSubs, node._persistFile, node);
+}
         closeBroker(node, done);
       } catch (e) {
         done();
