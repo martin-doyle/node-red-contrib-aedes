@@ -93,7 +93,7 @@ module.exports = function (RED) {
     }
   }
 
-  function loadSnapshot (broker, filePath, node) {
+  async function loadSnapshot (broker, filePath, node) {
     if (!checkWritable(RED.settings.userDir, node)) {
       return null;
     }
@@ -103,7 +103,7 @@ module.exports = function (RED) {
     }
     let raw;
     try {
-      raw = fs.readFileSync(filePath, 'utf8');
+      raw = await fs.promises.readFile(filePath, 'utf8');
     } catch (readErr) {
       node.warn(
         'aedes: could not read snapshot, starting with empty state: ' +
@@ -129,10 +129,6 @@ module.exports = function (RED) {
       );
       return null;
     }
-    if (!fs.existsSync(filePath)) {
-      node.debug('aedes: no snapshot found at ' + filePath);
-      return;
-    }
     // Restore retained messages via public API (batched to minimize yields)
     node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
     if (data.retained && typeof data.retained === 'object') {
@@ -140,7 +136,7 @@ module.exports = function (RED) {
       for (let i = 0; i < topics.length; i++) {
         const packet = data.retained[topics[i]];
         if (!packet.topic) continue;
-        broker.persistence.storeRetained({
+        await broker.persistence.storeRetained({
           topic: packet.topic,
           payload: Buffer.from(packet.payload || '', 'base64'),
           qos: packet.qos || 0,
@@ -165,8 +161,8 @@ module.exports = function (RED) {
       if (checkWritable(RED.settings.userDir, node)) {
         node._persistEnabled = true;
 
-        // Load existing snapshot
-        loadSnapshot(node._broker, persistFile, node);
+        // Load existing snapshot (must await so _initPromise resolves after restore)
+        await loadSnapshot(node._broker, persistFile, node);
 
         // Periodic save every 60 seconds (with guard against concurrent saves)
         let saving = false;
@@ -544,15 +540,12 @@ module.exports = function (RED) {
       try {
         await node._initPromise;
         // Stop periodic snapshot interval
-        node.debug('Clearing snapshot interval');
         if (node._snapshotInterval) {
           clearInterval(node._snapshotInterval);
           node._snapshotInterval = null;
         }
 
         // Save final snapshot on shutdown
-        node.debug('Saving final snapshot before shutdown');
-        node.debug('Persist Enabled: ' + node._persistEnabled + ', Broker exists: ' + !!node._broker);
         if (node._persistEnabled && node._broker) {
           await saveSnapshot(node._broker, node._persistFile, node);
         }
