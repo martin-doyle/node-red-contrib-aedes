@@ -489,11 +489,28 @@ module.exports = function (RED) {
         url: config.dburl
       });
       node.log('Start persistence to MongoDB');
-      /*
-    } else if (config.persistence_bind === 'level') {
-      aedesSettings.persistence = LevelPersistence(new Level('leveldb'));
-      node.log('Start persistence to LevelDB');
-      */
+    }
+
+    // File persistence (only for in-memory mode with persist_to_file enabled)
+    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
+      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
+      node._persistFile = persistFile;
+
+      if (checkWritable(RED.settings.userDir, node)) {
+        node._persistEnabled = true;
+
+        // Load existing snapshot
+        loadSnapshot(node._broker, persistFile, node);
+
+        // Periodic save every 60 seconds (with guard against concurrent saves)
+        let saving = false;
+        node._snapshotInterval = setInterval(function () {
+          if (saving) return;
+          saving = true;
+          saveSnapshot(node._broker, persistFile, node)
+            .finally(function () { saving = false; });
+        }, 60000);
+      }
     }
 
     if (this.cert && this.key && this.usetls) {
@@ -532,7 +549,7 @@ module.exports = function (RED) {
         // Save final snapshot on shutdown
         if (node._persistEnabled && node._broker) {
           await saveSnapshot(node._broker, node._trackedSubs, node._persistFile, node);
-}
+        }
         closeBroker(node, done);
       } catch (e) {
         done();
