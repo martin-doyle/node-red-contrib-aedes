@@ -28,7 +28,11 @@
       "persistence_memory": "Speicher",
       "persistence_mongodb": "MongoDB",
       "persistence_level": "LevelDB",
-      "dburl": "DB-URL"
+      "dburl": "DB-URL",
+      "persist_to_file": "Zustand über Neustarts hinweg speichern"
+    },
+    "tip": {
+      "persist_to_file": "Speichert Retained Messages und Subscriptions als JSON-Datei im Node-RED userDir. Wird beim Herunterfahren und alle 60 s geschrieben. QoS 1/2 In-Flight-Nachrichten werden nicht gespeichert. Wird automatisch deaktiviert, wenn userDir nicht beschreibbar ist."
     },
     "placeholder": {
       "mqtt_port": "MQTT-Port eingeben",
