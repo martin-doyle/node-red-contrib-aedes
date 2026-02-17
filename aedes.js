@@ -17,10 +17,8 @@
 module.exports = function (RED) {
   'use strict';
   const MongoPersistence = require('aedes-persistence-mongodb');
-  // const { Level } = require('level');
-  // const LevelPersistence = require('aedes-persistence-level');
-  // aedes is ESM-only in v1 -- dynamically imported in initializeBroker()
   const fs = require('fs');
+  const path = require('path');
   const net = require('net');
   const tls = require('tls');
   const http = require('http');
@@ -48,6 +46,107 @@ module.exports = function (RED) {
           listenerNodes[pathname].server.emit('connection', conn, request);
         }
       );
+    }
+  }
+
+  function checkWritable (dirPath, node) {
+    try {
+      fs.accessSync(dirPath, fs.constants.R_OK | fs.constants.W_OK);
+      return true;
+    } catch (err) {
+      node.warn('aedes: userDir is not writable (' + dirPath + ') – file persistence disabled: ' + err.message);
+      return false;
+    }
+  }
+
+  function saveSnapshot (broker, filePath, node) {
+    try {
+      node.debug('aedes: saving snapshot to ' + filePath);
+      // 1. Collect retained messages via public stream API
+      const retained = {};
+      const stream = broker.persistence.createRetainedStreamCombi(['#']);
+      for (const packet of stream) {
+        node.debug('aedes: snapshot - processing retained message: ' + packet.topic);
+        if (!packet.payload || packet.payload.length === 0) continue;
+        retained[packet.topic] = {
+          topic: packet.topic,
+          payload: Buffer.from(packet.payload).toString('base64'),
+          qos: packet.qos,
+          retain: true,
+          cmd: 'publish'
+        };
+      }
+
+      // 2. Atomic write: temp file + rename
+      const tmpFile = filePath + '.tmp';
+      fs.writeFileSync(
+        tmpFile,
+        JSON.stringify({ retained }, null, 2),
+        'utf8'
+      );
+      fs.renameSync(tmpFile, filePath);
+      node.debug('aedes: snapshot saved to ' + filePath);
+    } catch (err) {
+      node.warn('aedes: could not save snapshot: ' + err.message);
+    }
+  }
+
+  function loadSnapshot (broker, filePath, node) {
+    if (!checkWritable(RED.settings.userDir, node)) {
+      return null;
+    }
+    if (!fs.existsSync(filePath)) {
+      node.debug('aedes: no snapshot found at ' + filePath);
+      return null;
+    }
+    let raw;
+    try {
+      raw = fs.readFileSync(filePath, 'utf8');
+    } catch (readErr) {
+      node.warn(
+        'aedes: could not read snapshot, starting with empty state: ' +
+          readErr.message
+      );
+      return null;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (parseErr) {
+      node.warn(
+        'aedes: snapshot file is corrupt, starting with empty state: ' +
+          parseErr.message
+      );
+      return null;
+    }
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      node.warn(
+        'aedes: snapshot file has unexpected format, starting with empty state'
+      );
+      return null;
+    }
+    if (!fs.existsSync(filePath)) {
+      node.debug('aedes: no snapshot found at ' + filePath);
+      return;
+    }
+    // Restore retained messages via public API (batched to minimize yields)
+    node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
+    if (data.retained && typeof data.retained === 'object') {
+      const topics = Object.keys(data.retained);
+      for (let i = 0; i < topics.length; i++) {
+        const packet = data.retained[topics[i]];
+        if (!packet.topic) continue;
+        broker.persistence.storeRetained({
+          topic: packet.topic,
+          payload: Buffer.from(packet.payload || '', 'base64'),
+          qos: packet.qos || 0,
+          retain: true,
+          cmd: 'publish'
+        });
+      }
+      node.debug('aedes: snapshot restore complete');
     }
   }
 
