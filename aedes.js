@@ -59,13 +59,15 @@ module.exports = function (RED) {
     }
   }
 
-  function saveSnapshot (broker, filePath, node) {
+  async function saveSnapshot (broker, filePath, node) {
     try {
       node.debug('aedes: saving snapshot to ' + filePath);
       // 1. Collect retained messages via public stream API
       const retained = {};
       const stream = broker.persistence.createRetainedStreamCombi(['#']);
-      for (const packet of stream) {
+      node.debug('aedes: snapshot - collecting retained messages');
+      node.debug('aedes: snapshot - stream is readable: ' + stream.readable);
+      for await (const packet of stream) {
         node.debug('aedes: snapshot - processing retained message: ' + packet.topic);
         if (!packet.payload || packet.payload.length === 0) continue;
         retained[packet.topic] = {
@@ -79,12 +81,12 @@ module.exports = function (RED) {
 
       // 2. Atomic write: temp file + rename
       const tmpFile = filePath + '.tmp';
-      fs.writeFileSync(
+      await fs.promises.writeFile(
         tmpFile,
         JSON.stringify({ retained }, null, 2),
         'utf8'
       );
-      fs.renameSync(tmpFile, filePath);
+      await fs.promises.rename(tmpFile, filePath);
       node.debug('aedes: snapshot saved to ' + filePath);
     } catch (err) {
       node.warn('aedes: could not save snapshot: ' + err.message);
@@ -155,6 +157,27 @@ module.exports = function (RED) {
     const broker = await Aedes.createBroker(aedesSettings);
     if (node._closing) { broker.close(); return; }
     node._broker = broker;
+
+    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
+      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
+      node._persistFile = persistFile;
+
+      if (checkWritable(RED.settings.userDir, node)) {
+        node._persistEnabled = true;
+
+        // Load existing snapshot
+        loadSnapshot(node._broker, persistFile, node);
+
+        // Periodic save every 60 seconds (with guard against concurrent saves)
+        let saving = false;
+        node._snapshotInterval = setInterval(function () {
+          if (saving) return;
+          saving = true;
+          saveSnapshot(node._broker, persistFile, node)
+            .finally(function () { saving = false; });
+        }, 60000);
+      }
+    }
 
     let server;
     if (node.usetls) {
@@ -492,26 +515,6 @@ module.exports = function (RED) {
     }
 
     // File persistence (only for in-memory mode with persist_to_file enabled)
-    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
-      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
-      node._persistFile = persistFile;
-
-      if (checkWritable(RED.settings.userDir, node)) {
-        node._persistEnabled = true;
-
-        // Load existing snapshot
-        loadSnapshot(node._broker, persistFile, node);
-
-        // Periodic save every 60 seconds (with guard against concurrent saves)
-        let saving = false;
-        node._snapshotInterval = setInterval(function () {
-          if (saving) return;
-          saving = true;
-          saveSnapshot(node._broker, persistFile, node)
-            .finally(function () { saving = false; });
-        }, 60000);
-      }
-    }
 
     if (this.cert && this.key && this.usetls) {
       serverOptions.cert = this.cert;
@@ -541,14 +544,17 @@ module.exports = function (RED) {
       try {
         await node._initPromise;
         // Stop periodic snapshot interval
+        node.debug('Clearing snapshot interval');
         if (node._snapshotInterval) {
           clearInterval(node._snapshotInterval);
           node._snapshotInterval = null;
         }
 
         // Save final snapshot on shutdown
+        node.debug('Saving final snapshot before shutdown');
+        node.debug('Persist Enabled: ' + node._persistEnabled + ', Broker exists: ' + !!node._broker);
         if (node._persistEnabled && node._broker) {
-          await saveSnapshot(node._broker, node._trackedSubs, node._persistFile, node);
+          await saveSnapshot(node._broker, node._persistFile, node);
         }
         closeBroker(node, done);
       } catch (e) {
