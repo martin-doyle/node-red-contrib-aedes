@@ -38,12 +38,12 @@ module.exports = function (RED) {
   function handleServerUpgrade (request, socket, head) {
     const pathname = new URL(request.url, 'http://example.org').pathname;
     if (Object.prototype.hasOwnProperty.call(listenerNodes, pathname)) {
-      listenerNodes[pathname].server.handleUpgrade(
+      listenerNodes[pathname]._wsPathServer.handleUpgrade(
         request,
         socket,
         head,
         function done (conn) {
-          listenerNodes[pathname].server.emit('connection', conn, request);
+          listenerNodes[pathname]._wsPathServer.emit('connection', conn, request);
         }
       );
     }
@@ -184,7 +184,7 @@ module.exports = function (RED) {
     } else {
       server = net.createServer(broker.handle);
     }
-    node._server = server;
+    node._netServer = server;
 
     if (node.mqtt_ws_port) {
       // Awkward check since http or ws do not fire an error event in case the port is in use
@@ -212,13 +212,13 @@ module.exports = function (RED) {
         } else {
           httpServer = http.createServer();
         }
-        node._httpServer = httpServer;
+        node._wsHttpServer = httpServer;
         const wss = new WebSocketServer({ server: httpServer });
         wss.on('connection', function (websocket, req) {
           const stream = createWebSocketStream(websocket);
           broker.handle(stream, req);
         });
-        node._wss = wss;
+        node._wsServer = wss;
         httpServer.listen(config.mqtt_ws_port, function () {
           node.log(
             'Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port
@@ -258,8 +258,8 @@ module.exports = function (RED) {
           serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
         }
 
-        node.server = new WebSocketServer(serverOptions_);
-        node.server.on('connection', function (websocket, req) {
+        node._wsPathServer = new WebSocketServer(serverOptions_);
+        node._wsPathServer.on('connection', function (websocket, req) {
           const stream = createWebSocketStream(websocket);
           broker.handle(stream, req);
         });
@@ -525,9 +525,9 @@ module.exports = function (RED) {
 
     node._closing = false;
     node._broker = null;
-    node._server = null;
-    node._wss = null;
-    node._httpServer = null;
+    node._netServer = null;
+    node._wsServer = null;
+    node._wsHttpServer = null;
 
     node._initPromise = initializeBroker(node, config, aedesSettings, serverOptions);
     node._initPromise.catch(function (err) {
@@ -564,21 +564,21 @@ module.exports = function (RED) {
   function closeBroker (node, done) {
     process.nextTick(function () {
       function wsClose () {
-        if (node._wss) {
-          node._wss.close(function () {
-            if (node._httpServer) {
-              node._httpServer.close(function () { done(); });
+        if (node._wsServer) {
+          node._wsServer.close(function () {
+            if (node._wsHttpServer) {
+              node._wsHttpServer.close(function () { done(); });
             } else { done(); }
           });
         } else { done(); }
       }
       function serverClose () {
-        if (node._server) {
-          node._server.close(function () {
+        if (node._netServer) {
+          node._netServer.close(function () {
             if (node.mqtt_ws_path !== '' && node.fullPath) {
               delete listenerNodes[node.fullPath];
-              if (node.server) {
-                node.server.close(function () { wsClose(); });
+              if (node._wsPathServer) {
+                node._wsPathServer.close(function () { wsClose(); });
               } else { wsClose(); }
             } else { wsClose(); }
           });
