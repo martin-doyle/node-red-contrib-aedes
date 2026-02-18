@@ -537,6 +537,12 @@ module.exports = function (RED) {
     node._netServer = null;
     node._wsServer = null;
     node._wsHttpServer = null;
+    node._persistEnabled = false;
+    node._snapshotInterval = null;
+    node._persistFile = null;
+    node._loadPromise = null;
+    node._trackedSubs = null;
+    node._saving = false;
 
     node._initPromise = initializeBroker(node, config, aedesSettings, serverOptions);
     node._initPromise.catch(function (err) {
