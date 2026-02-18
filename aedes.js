@@ -26,6 +26,8 @@ module.exports = function (RED) {
   const { WebSocketServer, createWebSocketStream } = require('ws');
 
   let serverUpgradeAdded = false;
+  let wsPathNodeCount = 0;
+  let boundHandleServerUpgrade = null;
   const listenerNodes = {};
 
   /**
@@ -133,16 +135,20 @@ module.exports = function (RED) {
     node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
     if (data.retained && typeof data.retained === 'object') {
       const topics = Object.keys(data.retained);
-      for (let i = 0; i < topics.length; i++) {
-        const packet = data.retained[topics[i]];
-        if (!packet.topic) continue;
-        await broker.persistence.storeRetained({
-          topic: packet.topic,
-          payload: Buffer.from(packet.payload || '', 'base64'),
-          qos: packet.qos || 0,
-          retain: true,
-          cmd: 'publish'
-        });
+      try {
+        for (let i = 0; i < topics.length; i++) {
+          const packet = data.retained[topics[i]];
+          if (!packet.topic) continue;
+          await broker.persistence.storeRetained({
+            topic: packet.topic,
+            payload: Buffer.from(packet.payload || '', 'base64'),
+            qos: packet.qos || 0,
+            retain: true,
+            cmd: 'publish'
+          });
+        }
+      } catch (err) {
+        node.warn('aedes: failed to restore retained messages from snapshot: ' + err.message);
       }
       node.debug('aedes: snapshot restore complete');
     }
@@ -162,18 +168,18 @@ module.exports = function (RED) {
         node._persistEnabled = true;
 
         // Load existing snapshot (must await so _initPromise resolves after restore)
-        node._loadPromise = loadSnapshot(node._broker, persistFile, node);
-        node._loadPromise.catch(function (err) {
-          node.warn('aedes: failed to load snapshot: ' + err.message);
-        });
+        node._loadPromise = loadSnapshot(node._broker, persistFile, node)
+          .catch(function (err) {
+            node.warn('aedes: failed to load snapshot: ' + err.message);
+          });
 
         // Periodic save every 60 seconds (with guard against concurrent saves)
-        let saving = false;
+        node._saving = false;
         node._snapshotInterval = setInterval(function () {
-          if (saving) return;
-          saving = true;
+          if (node._saving) return;
+          node._saving = true;
           saveSnapshot(node._broker, persistFile, node)
-            .finally(function () { saving = false; });
+            .finally(function () { node._saving = false; });
         }, 60000);
       }
     }
@@ -232,9 +238,11 @@ module.exports = function (RED) {
 
     if (node.mqtt_ws_path !== '') {
       if (!serverUpgradeAdded) {
-        RED.server.on('upgrade', handleServerUpgrade);
+        boundHandleServerUpgrade = handleServerUpgrade;
+        RED.server.on('upgrade', boundHandleServerUpgrade);
         serverUpgradeAdded = true;
       }
+      wsPathNodeCount++;
 
       let path = RED.settings.httpNodeRoot || '/';
       path =
@@ -285,19 +293,7 @@ module.exports = function (RED) {
       });
     });
 
-    if (node.mqtt_port) {
-      server.listen(node.mqtt_port, function () {
-        node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
-        node.status({
-          fill: 'green',
-          shape: 'dot',
-          text: 'node-red:common.status.connected'
-        });
-      });
-    }
-
-    await node._loadPromise;
-
+    // Set up authentication handler BEFORE starting the server
     if (node.credentials && node.username && node.password) {
       broker.authenticate = function (client, username, password, callback) {
         const authorized =
@@ -310,6 +306,19 @@ module.exports = function (RED) {
         callback(null, authorized);
       };
     }
+
+    if (node.mqtt_port) {
+      server.listen(node.mqtt_port, function () {
+        node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
+        node.status({
+          fill: 'green',
+          shape: 'dot',
+          text: 'node-red:common.status.connected'
+        });
+      });
+    }
+
+    await node._loadPromise;
 
     broker.on('client', function (client) {
       const msg = {
@@ -550,8 +559,18 @@ module.exports = function (RED) {
           node._snapshotInterval = null;
         }
 
-        // Save final snapshot on shutdown
+        // Save final snapshot on shutdown (wait if an interval save is in progress)
         if (node._persistEnabled && node._broker) {
+          // Wait for any in-progress interval save to complete
+          const waitForSave = new Promise(function (resolve) {
+            const check = setInterval(function () {
+              if (!node._saving) {
+                clearInterval(check);
+                resolve();
+              }
+            }, 50);
+          });
+          await waitForSave;
           await saveSnapshot(node._broker, node._persistFile, node);
         }
         closeBroker(node, done);
@@ -565,6 +584,11 @@ module.exports = function (RED) {
     process.nextTick(function () {
       function wsClose () {
         if (node._wsServer) {
+          // Terminate all existing WebSocket connections so close() callback fires promptly
+          node.log('Unbinding aedes mqtt server from ws port: ' + node.mqtt_ws_port);
+          node._wsServer.clients.forEach(function (ws) {
+            ws.terminate();
+          });
           node._wsServer.close(function () {
             if (node._wsHttpServer) {
               node._wsHttpServer.close(function () { done(); });
@@ -574,10 +598,29 @@ module.exports = function (RED) {
       }
       function serverClose () {
         if (node._netServer) {
+          node.log('Unbinding aedes mqtt server from port: ' + node.mqtt_port);
+          node.status({
+            fill: 'red',
+            shape: 'ring',
+            text: 'node-red:common.status.disconnected'
+          });
           node._netServer.close(function () {
             if (node.mqtt_ws_path !== '' && node.fullPath) {
+              node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
               delete listenerNodes[node.fullPath];
+              // Remove upgrade listener if this is the last WS-path node
+              wsPathNodeCount--;
+              if (wsPathNodeCount <= 0 && serverUpgradeAdded && boundHandleServerUpgrade) {
+                RED.server.removeListener('upgrade', boundHandleServerUpgrade);
+                serverUpgradeAdded = false;
+                boundHandleServerUpgrade = null;
+                wsPathNodeCount = 0;
+              }
               if (node._wsPathServer) {
+                // Terminate all existing WebSocket connections so close() callback fires promptly
+                node._wsPathServer.clients.forEach(function (ws) {
+                  ws.terminate();
+                });
                 node._wsPathServer.close(function () { wsClose(); });
               } else { wsClose(); }
             } else { wsClose(); }
