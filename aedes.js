@@ -279,11 +279,11 @@ module.exports = function (RED) {
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error(
-          RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_port })
+          RED._('aedes-mqtt-broker.error.port-in-use', { port: node.mqtt_port })
         );
       } else {
         node.error(
-          RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_port, error: err.toString() })
+          RED._('aedes-mqtt-broker.error.server-error', { port: node.mqtt_port, error: err.toString() })
         );
       }
       node.status({
@@ -309,7 +309,7 @@ module.exports = function (RED) {
 
     if (node.mqtt_port) {
       server.listen(node.mqtt_port, function () {
-        node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
+        node.log('Binding aedes mqtt server on port: ' + node.mqtt_port);
         node.status({
           fill: 'green',
           shape: 'dot',
@@ -337,6 +337,7 @@ module.exports = function (RED) {
           client
         }
       };
+      node.send([msg, null]);
       node.status({
         fill: 'green',
         shape: 'dot',
@@ -344,7 +345,6 @@ module.exports = function (RED) {
           count: broker.connectedClients
         })
       });
-      node.send([msg, null]);
     });
 
     broker.on('clientDisconnect', function (client) {
