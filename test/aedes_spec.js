@@ -5,6 +5,7 @@ const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
 const mqtt = require('mqtt');
 const should = require('should');
+const { logError } = require('./test-utils');
 
 const credentialsOK = { n1: { username: 'test', password: 'test' }, b1: { user: 'test', password: 'test' } };
 const credentialsMissing = { n1: { username: 'test', password: 'test' }, b1: { user: 'test' } };
@@ -354,9 +355,7 @@ describe('Aedes Broker TCP tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-        client.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client.on('error', logError);
         client.on('connect', function () {
           // console.log('External client connected');
         });
@@ -410,9 +409,7 @@ describe('Aedes Broker TCP tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client = mqtt.connect('mqtt://localhost:1883', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-        client.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client.on('error', logError);
         client.on('connect', function () {
           // console.log('External client connected');
         });

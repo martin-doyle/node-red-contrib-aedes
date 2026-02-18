@@ -5,6 +5,7 @@ const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
 const mqtt = require('mqtt');
 const should = require('should');
+const { logError } = require('./test-utils');
 
 helper.init(require.resolve('node-red'));
 
@@ -55,16 +56,12 @@ describe('Aedes Broker QOS tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-        client1.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client1.on('error', logError);
         client1.on('connect', function () {
           // console.log('External client1 connected');
         });
         const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
-        client2.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client2.on('error', logError);
         client2.on('connect', function () {
           // console.log('External client2 connected');
           client2.subscribe('test1883', { qos: 1 }, function (err, granted) {
@@ -124,16 +121,12 @@ describe('Aedes Broker QOS tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client1 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client1' });
-        client1.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client1.on('error', logError);
         client1.on('connect', function () {
           // console.log('External client1 connected');
         });
         const client2 = mqtt.connect('mqtt://localhost:1883', { clientId: 'client2', clean: false });
-        client2.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client2.on('error', logError);
         client2.on('connect', function () {
           // console.log('External client2 connected');
           client2.subscribe('test1883', { qos: 2 }, function (err, granted) {
