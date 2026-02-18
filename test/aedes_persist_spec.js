@@ -39,7 +39,8 @@ describe('Aedes Broker Persistence - Group 1: Happy Path', function () {
     helper.load(aedesNode, flow, function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
-        should.not.exist(n1._persistEnabled);
+        // After bug fix 11, properties are initialized (not undefined)
+        n1._persistEnabled.should.equal(false);
         should.not.exist(n1._snapshotInterval);
         const files = fs.readdirSync(tmpDir).filter(function (f) {
           return f.startsWith('aedes-persist-');
