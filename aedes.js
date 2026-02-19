@@ -61,6 +61,69 @@ module.exports = function (RED) {
     }
   }
 
+  function readSnapshotSync (filePath, node) {
+    if (!fs.existsSync(filePath)) {
+      node.debug('aedes: no snapshot found at ' + filePath);
+      return null;
+    }
+    let raw;
+    try {
+      raw = fs.readFileSync(filePath, 'utf8');
+    } catch (readErr) {
+      node.warn(
+        'aedes: could not read snapshot, starting with empty state: ' +
+          readErr.message
+      );
+      return null;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (parseErr) {
+      node.warn(
+        'aedes: snapshot file is corrupt, starting with empty state: ' +
+          parseErr.message
+      );
+      return null;
+    }
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      node.warn(
+        'aedes: snapshot file has unexpected format, starting with empty state'
+      );
+      return null;
+    }
+    return data;
+  }
+
+  async function restoreRetained (broker, data, node) {
+    if (!data) {
+      node.debug('aedes: no snapshot data to restore');
+      return;
+    }
+    node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
+    if (data.retained && typeof data.retained === 'object') {
+      const topics = Object.keys(data.retained);
+      try {
+        for (let i = 0; i < topics.length; i++) {
+          const packet = data.retained[topics[i]];
+          if (!packet.topic) continue;
+          await broker.persistence.storeRetained({
+            topic: packet.topic,
+            payload: Buffer.from(packet.payload || '', 'base64'),
+            qos: packet.qos || 0,
+            retain: true,
+            cmd: 'publish'
+          });
+        }
+      } catch (err) {
+        node.warn('aedes: failed to restore retained messages from snapshot: ' + err.message);
+      }
+      node.debug('aedes: snapshot restore complete');
+    }
+  }
+
   async function saveSnapshot (broker, filePath, node) {
     try {
       node.debug('aedes: saving snapshot to ' + filePath);
@@ -95,65 +158,6 @@ module.exports = function (RED) {
     }
   }
 
-  async function loadSnapshot (broker, filePath, node) {
-    if (!checkWritable(RED.settings.userDir, node)) {
-      return null;
-    }
-    if (!fs.existsSync(filePath)) {
-      node.debug('aedes: no snapshot found at ' + filePath);
-      return null;
-    }
-    let raw;
-    try {
-      raw = await fs.promises.readFile(filePath, 'utf8');
-    } catch (readErr) {
-      node.warn(
-        'aedes: could not read snapshot, starting with empty state: ' +
-          readErr.message
-      );
-      return null;
-    }
-
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch (parseErr) {
-      node.warn(
-        'aedes: snapshot file is corrupt, starting with empty state: ' +
-          parseErr.message
-      );
-      return null;
-    }
-
-    if (!data || typeof data !== 'object' || Array.isArray(data)) {
-      node.warn(
-        'aedes: snapshot file has unexpected format, starting with empty state'
-      );
-      return null;
-    }
-    // Restore retained messages via public API (batched to minimize yields)
-    node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
-    if (data.retained && typeof data.retained === 'object') {
-      const topics = Object.keys(data.retained);
-      try {
-        for (let i = 0; i < topics.length; i++) {
-          const packet = data.retained[topics[i]];
-          if (!packet.topic) continue;
-          await broker.persistence.storeRetained({
-            topic: packet.topic,
-            payload: Buffer.from(packet.payload || '', 'base64'),
-            qos: packet.qos || 0,
-            retain: true,
-            cmd: 'publish'
-          });
-        }
-      } catch (err) {
-        node.warn('aedes: failed to restore retained messages from snapshot: ' + err.message);
-      }
-      node.debug('aedes: snapshot restore complete');
-    }
-  }
-
   async function createBroker (node, config, aedesSettings, serverOptions) {
     const { Aedes } = await import('aedes');
     const broker = await Aedes.createBroker(aedesSettings);
@@ -167,11 +171,10 @@ module.exports = function (RED) {
       if (checkWritable(RED.settings.userDir, node)) {
         node._persistEnabled = true;
 
-        // Load existing snapshot (must await so _initPromise resolves after restore)
-        node._loadPromise = loadSnapshot(node._broker, persistFile, node)
-          .catch(function (err) {
-            node.warn('aedes: failed to load snapshot: ' + err.message);
-          });
+        // Restore retained messages from snapshot data (already read synchronously in constructor)
+        if (node._snapshotData) {
+          await restoreRetained(broker, node._snapshotData, node);
+        }
 
         // Periodic save every 60 seconds (with guard against concurrent saves)
         node._saving = false;
@@ -262,8 +265,6 @@ module.exports = function (RED) {
         callback(null, authorized);
       };
     }
-
-    await node._loadPromise;
 
     broker.on('client', function (client) {
       const msg = {
@@ -571,9 +572,17 @@ module.exports = function (RED) {
     node._persistEnabled = false;
     node._snapshotInterval = null;
     node._persistFile = null;
-    node._loadPromise = null;
+    node._snapshotData = null;
     node._trackedSubs = null;
     node._saving = false;
+
+    // Read snapshot file synchronously before async initialization
+    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
+      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
+      if (checkWritable(RED.settings.userDir, node)) {
+        node._snapshotData = readSnapshotSync(persistFile, node);
+      }
+    }
 
     node._initPromise = (async function () {
       await createBroker(node, config, aedesSettings, serverOptions);
