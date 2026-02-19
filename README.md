@@ -31,7 +31,8 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 - WebSocket Support via port or path
 - SSL / TLS
 - Message Persistence (In-memory or MongoDB)
- 
+- File-based snapshot persistence
+
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
 
 ## Server without public IP or behind firewall

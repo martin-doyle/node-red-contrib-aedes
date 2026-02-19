@@ -1,5 +1,9 @@
 # node-red-contrib-aedes Changelog
 
+## Feb 19, 2026, Version 1.2.0
+### Notable changes
+- Added file-based snapshot persistence with automatic recovery on Node-RED restart
+
 ## Feb 15, 2026, Version 1.1.0
 ### Notable changes
 - Improved help documentation
