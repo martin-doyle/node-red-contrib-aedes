@@ -31,7 +31,8 @@ Just put this node on Node-RED and hit the deploy button. The MQTT Broker will r
 - WebSocket Support via port or path
 - SSL / TLS
 - Message Persistence (In-memory or MongoDB)
- 
+- File-based snapshot persistence
+
 For more information see [Aedes](https://github.com/moscajs/aedes/blob/master/README.md#features).
 
 ## Server without public IP or behind firewall
@@ -45,7 +46,7 @@ You can also bind the WebSocket to the root `"/"` path and having `wss://yourser
 
 The current version is based on **Aedes version 1.0**, which introduces several breaking changes. If your environment requires Aedes version 0.51, you can switch to version 0.15.x of this package.
 
-To install the compatible version using the `version-11` dist-tag:
+To install the compatible version using the `version-15` dist-tag:
 ```sh
 npm install node-red-contrib-aedes@version-15
 ```

@@ -4,6 +4,7 @@ const helper = require('node-red-node-test-helper');
 const aedesNode = require('../aedes.js');
 const mqttNode = require('../node_modules/node-red/node_modules/@node-red/nodes/core/network/10-mqtt.js');
 const mqtt = require('mqtt');
+const { logError } = require('./test-utils');
 
 helper.init(require.resolve('node-red'));
 
@@ -41,9 +42,7 @@ describe('Aedes Broker Websocket tests', function () {
           resubscribe: false,
           reconnectPeriod: -1
         });
-        client.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client.on('error', logError);
         const n2 = helper.getNode('n2');
         n2.on('input', function (msg) {
           if (msg.topic === 'clientReady') {
@@ -158,9 +157,7 @@ describe('Aedes Broker Websocket tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client = mqtt.connect('ws://localhost:8080', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-        client.on('error', function (err) {
-          console.error('Error: ', err.toString());
-        });
+        client.on('error', logError);
         client.on('connect', function () {
           // console.log('External client connected');
         });
@@ -224,9 +221,7 @@ describe('Aedes Broker Websocket tests', function () {
       const n1 = helper.getNode('n1');
       n1._initPromise.then(function () {
         const client = mqtt.connect(helper.url().replace(/http/, 'ws') + '/mqtt', { clientId: 'client', resubscribe: false, reconnectPeriod: -1 });
-        client.on('error', function (err) {
-          console.error('Client on error: ', err.toString());
-        });
+        client.on('error', logError);
         client.on('connect', function () {
           // console.log('External client connected');
         });

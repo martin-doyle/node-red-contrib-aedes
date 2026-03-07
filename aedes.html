@@ -136,6 +136,13 @@
                       data-i18n="aedes-mqtt-broker.label.dburl"></span></label>
               <input type="text" id="node-input-dburl" data-i18n="[placeholder]aedes-mqtt-broker.placeholder.dburl">
           </div>
+          <div class="form-row hide" id="node-row-persist-to-file">
+              <input type="checkbox" id="node-input-persist_to_file"
+                  style="display: inline-block; width: auto; vertical-align: top;">
+              <label for="node-input-persist_to_file" style="width: auto"
+                  data-i18n="aedes-mqtt-broker.label.persist_to_file"></label>
+              <div class="form-tips" data-i18n="aedes-mqtt-broker.tip.persist_to_file" style="margin-top: 4px;"></div>
+          </div>
       </div>
       <div id="aedes-broker-tab-security" style="display:none">
           <div class="form-row">
@@ -195,6 +202,7 @@
       caname: {value:""},
       persistence_bind: { value: 'memory', required: true },
       dburl: { value: '', required: false },
+      persist_to_file: { value: false },
       usetls: { value: false }
     },
     credentials: {
@@ -264,31 +272,38 @@
 
       const persistenceInput = $('#node-input-persistence_bind');
       const dburlRow = $('#node-row-dburl');
+      const persistFileRow = $('#node-row-persist-to-file');
       const dburl = this.dburl;
       persistenceInput.on('change', function () {
         switch ($(this).val()) {
           case 'memory':
             dburlRow.hide();
+            persistFileRow.show();
             break;
           case 'mongodb':
             dburlRow.show();
+            persistFileRow.hide();
             break;
           case 'level':
             dburlRow.hide();
+            persistFileRow.hide();
             break;
           case null:
             if (dburl) {
               this.persistence_bind = 'mongodb';
               persistenceInput.val('mongodb');
               dburlRow.show();
+              persistFileRow.hide();
             } else {
               this.persistence_bind = 'memory';
               persistenceInput.val('memory');
               dburlRow.hide();
+              persistFileRow.show();
             }
             break;
         }
       });
+      persistenceInput.trigger('change');
 
       if (typeof this.usetls === 'undefined') {
         this.usetls = false;

@@ -17,10 +17,8 @@
 module.exports = function (RED) {
   'use strict';
   const MongoPersistence = require('aedes-persistence-mongodb');
-  // const { Level } = require('level');
-  // const LevelPersistence = require('aedes-persistence-level');
-  // aedes is ESM-only in v1 -- dynamically imported in initializeBroker()
   const fs = require('fs');
+  const path = require('path');
   const net = require('net');
   const tls = require('tls');
   const http = require('http');
@@ -28,6 +26,8 @@ module.exports = function (RED) {
   const { WebSocketServer, createWebSocketStream } = require('ws');
 
   let serverUpgradeAdded = false;
+  let wsPathNodeCount = 0;
+  let boundHandleServerUpgrade = null;
   const listenerNodes = {};
 
   /**
@@ -40,22 +40,152 @@ module.exports = function (RED) {
   function handleServerUpgrade (request, socket, head) {
     const pathname = new URL(request.url, 'http://example.org').pathname;
     if (Object.prototype.hasOwnProperty.call(listenerNodes, pathname)) {
-      listenerNodes[pathname].server.handleUpgrade(
+      listenerNodes[pathname]._wsPathServer.handleUpgrade(
         request,
         socket,
         head,
         function done (conn) {
-          listenerNodes[pathname].server.emit('connection', conn, request);
+          listenerNodes[pathname]._wsPathServer.emit('connection', conn, request);
         }
       );
     }
   }
 
-  async function initializeBroker (node, config, aedesSettings, serverOptions) {
+  function checkWritable (dirPath, node) {
+    try {
+      fs.accessSync(dirPath, fs.constants.R_OK | fs.constants.W_OK);
+      return true;
+    } catch (err) {
+      node.warn('aedes: userDir is not writable (' + dirPath + ') – file persistence disabled: ' + err.message);
+      return false;
+    }
+  }
+
+  function readSnapshotSync (filePath, node) {
+    if (!fs.existsSync(filePath)) {
+      node.debug('aedes: no snapshot found at ' + filePath);
+      return null;
+    }
+    let raw;
+    try {
+      raw = fs.readFileSync(filePath, 'utf8');
+    } catch (readErr) {
+      node.warn(
+        'aedes: could not read snapshot, starting with empty state: ' +
+          readErr.message
+      );
+      return null;
+    }
+
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch (parseErr) {
+      node.warn(
+        'aedes: snapshot file is corrupt, starting with empty state: ' +
+          parseErr.message
+      );
+      return null;
+    }
+
+    if (!data || typeof data !== 'object' || Array.isArray(data)) {
+      node.warn(
+        'aedes: snapshot file has unexpected format, starting with empty state'
+      );
+      return null;
+    }
+    return data;
+  }
+
+  async function restoreRetained (broker, data, node) {
+    if (!data) {
+      node.debug('aedes: no snapshot data to restore');
+      return;
+    }
+    node.debug('aedes: restoring snapshot - retained messages: ' + Object.keys(data.retained || {}).length);
+    if (data.retained && typeof data.retained === 'object') {
+      const topics = Object.keys(data.retained);
+      try {
+        for (let i = 0; i < topics.length; i++) {
+          const packet = data.retained[topics[i]];
+          if (!packet.topic) continue;
+          await broker.persistence.storeRetained({
+            topic: packet.topic,
+            payload: Buffer.from(packet.payload || '', 'base64'),
+            qos: packet.qos || 0,
+            retain: true,
+            cmd: 'publish'
+          });
+        }
+      } catch (err) {
+        node.warn('aedes: failed to restore retained messages from snapshot: ' + err.message);
+      }
+      node.debug('aedes: snapshot restore complete');
+    }
+  }
+
+  async function saveSnapshot (broker, filePath, node) {
+    try {
+      node.debug('aedes: saving snapshot to ' + filePath);
+      // 1. Collect retained messages via public stream API
+      const retained = {};
+      const stream = broker.persistence.createRetainedStreamCombi(['#']);
+      node.debug('aedes: snapshot - collecting retained messages');
+      node.debug('aedes: snapshot - stream is readable: ' + stream.readable);
+      for await (const packet of stream) {
+        node.debug('aedes: snapshot - processing retained message: ' + packet.topic);
+        if (!packet.payload || packet.payload.length === 0) continue;
+        retained[packet.topic] = {
+          topic: packet.topic,
+          payload: Buffer.from(packet.payload).toString('base64'),
+          qos: packet.qos,
+          retain: true,
+          cmd: 'publish'
+        };
+      }
+
+      // 2. Atomic write: temp file + rename
+      const tmpFile = filePath + '.tmp';
+      await fs.promises.writeFile(
+        tmpFile,
+        JSON.stringify({ retained }, null, 2),
+        'utf8'
+      );
+      await fs.promises.rename(tmpFile, filePath);
+      node.debug('aedes: snapshot saved to ' + filePath);
+    } catch (err) {
+      node.warn('aedes: could not save snapshot: ' + err.message);
+    }
+  }
+
+  async function createBroker (node, config, aedesSettings, serverOptions) {
     const { Aedes } = await import('aedes');
     const broker = await Aedes.createBroker(aedesSettings);
     if (node._closing) { broker.close(); return; }
     node._broker = broker;
+
+    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
+      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
+      node._persistFile = persistFile;
+
+      if (checkWritable(RED.settings.userDir, node)) {
+        node._persistEnabled = true;
+
+        // Restore retained messages from snapshot data (already read synchronously in constructor)
+        if (node._snapshotData) {
+          await restoreRetained(broker, node._snapshotData, node);
+        }
+
+        // Periodic save every 60 seconds (with guard against concurrent saves)
+        node._saving = false;
+        node._snapshotInterval = setInterval(function () {
+          if (node._saving) return;
+          node._saving = true;
+          saveSnapshot(node._broker, persistFile, node)
+            .finally(function () { node._saving = false; });
+        }, 60000);
+      }
+    }
 
     let server;
     if (node.usetls) {
@@ -63,68 +193,26 @@ module.exports = function (RED) {
     } else {
       server = net.createServer(broker.handle);
     }
-    node._server = server;
-
-    if (node.mqtt_ws_port) {
-      // Awkward check since http or ws do not fire an error event in case the port is in use
-      const testServer = net.createServer();
-      testServer.once('error', function (err) {
-        if (err.code === 'EADDRINUSE') {
-          node.error(
-            RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_ws_port })
-          );
-        } else {
-          node.error(
-            RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_ws_port, error: err.toString() })
-          );
-        }
-        node.status({ fill: 'red', shape: 'ring', text: 'aedes-mqtt-broker.status.error' });
-      });
-      testServer.once('listening', function () {
-        testServer.close();
-      });
-
-      testServer.once('close', function () {
-        let httpServer;
-        if (node.usetls) {
-          httpServer = https.createServer(serverOptions);
-        } else {
-          httpServer = http.createServer();
-        }
-        node._httpServer = httpServer;
-        const wss = new WebSocketServer({ server: httpServer });
-        wss.on('connection', function (websocket, req) {
-          const stream = createWebSocketStream(websocket);
-          broker.handle(stream, req);
-        });
-        node._wss = wss;
-        httpServer.listen(config.mqtt_ws_port, function () {
-          node.log(
-            'Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port
-          );
-        });
-      });
-      testServer.listen(config.mqtt_ws_port, function () {
-        node.log('Checking ws port: ' + config.mqtt_ws_port);
-      });
-    }
+    node._netServer = server;
 
     if (node.mqtt_ws_path !== '') {
       if (!serverUpgradeAdded) {
-        RED.server.on('upgrade', handleServerUpgrade);
+        boundHandleServerUpgrade = handleServerUpgrade;
+        RED.server.on('upgrade', boundHandleServerUpgrade);
         serverUpgradeAdded = true;
       }
+      wsPathNodeCount++;
 
-      let path = RED.settings.httpNodeRoot || '/';
-      path =
-        path +
-        (path.slice(-1) === '/' ? '' : '/') +
+      let pathStr = RED.settings.httpNodeRoot || '/';
+      pathStr =
+        pathStr +
+        (pathStr.slice(-1) === '/' ? '' : '/') +
         (node.mqtt_ws_path.charAt(0) === '/'
           ? node.mqtt_ws_path.substring(1)
           : node.mqtt_ws_path);
-      node.fullPath = path;
+      node.fullPath = pathStr;
 
-      if (Object.prototype.hasOwnProperty.call(listenerNodes, path)) {
+      if (Object.prototype.hasOwnProperty.call(listenerNodes, pathStr)) {
         node.error(
           RED._('websocket.errors.duplicate-path', { path: node.mqtt_ws_path })
         );
@@ -137,8 +225,8 @@ module.exports = function (RED) {
           serverOptions_.verifyClient = RED.settings.webSocketNodeVerifyClient;
         }
 
-        node.server = new WebSocketServer(serverOptions_);
-        node.server.on('connection', function (websocket, req) {
+        node._wsPathServer = new WebSocketServer(serverOptions_);
+        node._wsPathServer.on('connection', function (websocket, req) {
           const stream = createWebSocketStream(websocket);
           broker.handle(stream, req);
         });
@@ -150,11 +238,11 @@ module.exports = function (RED) {
     server.once('error', function (err) {
       if (err.code === 'EADDRINUSE') {
         node.error(
-          RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_port })
+          RED._('aedes-mqtt-broker.error.port-in-use', { port: node.mqtt_port })
         );
       } else {
         node.error(
-          RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_port, error: err.toString() })
+          RED._('aedes-mqtt-broker.error.server-error', { port: node.mqtt_port, error: err.toString() })
         );
       }
       node.status({
@@ -164,17 +252,7 @@ module.exports = function (RED) {
       });
     });
 
-    if (node.mqtt_port) {
-      server.listen(node.mqtt_port, function () {
-        node.log('Binding aedes mqtt server on port: ' + config.mqtt_port);
-        node.status({
-          fill: 'green',
-          shape: 'dot',
-          text: 'node-red:common.status.connected'
-        });
-      });
-    }
-
+    // Set up authentication handler BEFORE starting the server
     if (node.credentials && node.username && node.password) {
       broker.authenticate = function (client, username, password, callback) {
         const authorized =
@@ -205,6 +283,7 @@ module.exports = function (RED) {
           client
         }
       };
+      node.send([msg, null]);
       node.status({
         fill: 'green',
         shape: 'dot',
@@ -212,7 +291,6 @@ module.exports = function (RED) {
           count: broker.connectedClients
         })
       });
-      node.send([msg, null]);
     });
 
     broker.on('clientDisconnect', function (client) {
@@ -322,6 +400,92 @@ module.exports = function (RED) {
     });
   }
 
+  async function startListening (node, config, serverOptions) {
+    if (node.mqtt_ws_port) {
+      // Awkward check since http or ws do not fire an error event in case the port is in use
+      const testServer = net.createServer();
+      testServer.once('error', function (err) {
+        if (err.code === 'EADDRINUSE') {
+          node.error(
+            RED._('aedes-mqtt-broker.error.port-in-use', { port: config.mqtt_ws_port })
+          );
+        } else {
+          node.error(
+            RED._('aedes-mqtt-broker.error.server-error', { port: config.mqtt_ws_port, error: err.toString() })
+          );
+        }
+        node.status({ fill: 'red', shape: 'ring', text: 'aedes-mqtt-broker.status.error' });
+      });
+      testServer.once('listening', function () {
+        testServer.close();
+      });
+
+      testServer.once('close', function () {
+        let httpServer;
+        if (node.usetls) {
+          httpServer = https.createServer(serverOptions);
+        } else {
+          httpServer = http.createServer();
+        }
+        node._wsHttpServer = httpServer;
+        const wss = new WebSocketServer({ server: httpServer });
+        wss.on('connection', function (websocket, req) {
+          const stream = createWebSocketStream(websocket);
+          node._broker.handle(stream, req);
+        });
+        node._wsServer = wss;
+        httpServer.listen(config.mqtt_ws_port, function () {
+          node.log(
+            'Binding aedes mqtt server on ws port: ' + config.mqtt_ws_port
+          );
+        });
+      });
+      testServer.listen(config.mqtt_ws_port, function () {
+        node.log('Checking ws port: ' + config.mqtt_ws_port);
+      });
+    }
+
+    if (node.mqtt_port) {
+      node._netServer.listen(node.mqtt_port, function () {
+        node.log('Binding aedes mqtt server on port: ' + node.mqtt_port);
+        node.status({
+          fill: 'green',
+          shape: 'dot',
+          text: 'node-red:common.status.connected'
+        });
+      });
+    }
+  }
+
+  async function shutdownBroker (node, done) {
+    try {
+      await node._initPromise;
+      // Stop periodic snapshot interval
+      if (node._snapshotInterval) {
+        clearInterval(node._snapshotInterval);
+        node._snapshotInterval = null;
+      }
+
+      // Save final snapshot on shutdown (wait if an interval save is in progress)
+      if (node._persistEnabled && node._broker) {
+        // Wait for any in-progress interval save to complete
+        const waitForSave = new Promise(function (resolve) {
+          const check = setInterval(function () {
+            if (!node._saving) {
+              clearInterval(check);
+              resolve();
+            }
+          }, 50);
+        });
+        await waitForSave;
+        await saveSnapshot(node._broker, node._persistFile, node);
+      }
+      closeBroker(node, done);
+    } catch (e) {
+      done();
+    }
+  }
+
   function AedesBrokerNode (config) {
     RED.nodes.createNode(this, config);
     this.mqtt_port = parseInt(config.mqtt_port, 10);
@@ -390,12 +554,9 @@ module.exports = function (RED) {
         url: config.dburl
       });
       node.log('Start persistence to MongoDB');
-      /*
-    } else if (config.persistence_bind === 'level') {
-      aedesSettings.persistence = LevelPersistence(new Level('leveldb'));
-      node.log('Start persistence to LevelDB');
-      */
     }
+
+    // File persistence (only for in-memory mode with persist_to_file enabled)
 
     if (this.cert && this.key && this.usetls) {
       serverOptions.cert = this.cert;
@@ -405,50 +566,82 @@ module.exports = function (RED) {
 
     node._closing = false;
     node._broker = null;
-    node._server = null;
-    node._wss = null;
-    node._httpServer = null;
+    node._netServer = null;
+    node._wsServer = null;
+    node._wsHttpServer = null;
+    node._persistEnabled = false;
+    node._snapshotInterval = null;
+    node._persistFile = null;
+    node._snapshotData = null;
+    node._trackedSubs = null;
+    node._saving = false;
 
-    node._initPromise = initializeBroker(node, config, aedesSettings, serverOptions);
+    // Read snapshot file synchronously before async initialization
+    if (config.persistence_bind !== 'mongodb' && config.persist_to_file === true) {
+      const persistFile = path.join(RED.settings.userDir, 'aedes-persist-' + node.id + '.json');
+      if (checkWritable(RED.settings.userDir, node)) {
+        node._snapshotData = readSnapshotSync(persistFile, node);
+      }
+    }
+
+    node._initPromise = (async function () {
+      await createBroker(node, config, aedesSettings, serverOptions);
+      await startListening(node, config, serverOptions);
+    }());
     node._initPromise.catch(function (err) {
       node.error(RED._('aedes-mqtt-broker.error.init-failed', { error: err.toString() }));
       node.status({ fill: 'red', shape: 'ring', text: 'aedes-mqtt-broker.status.init-failed' });
     });
 
-    this.on('close', async function (removed, done) {
+    this.on('close', function (removed, done) {
       node._closing = true;
-      if (removed) {
-        node.debug('Node removed or disabled');
-      } else {
-        node.debug('Node restarting');
-      }
-      try {
-        await node._initPromise;
-        closeBroker(node, done);
-      } catch (e) {
-        done();
-      }
+      node.debug(removed ? 'Node removed or disabled' : 'Node restarting');
+      shutdownBroker(node, done);
     });
   }
 
   function closeBroker (node, done) {
     process.nextTick(function () {
       function wsClose () {
-        if (node._wss) {
-          node._wss.close(function () {
-            if (node._httpServer) {
-              node._httpServer.close(function () { done(); });
+        if (node._wsServer) {
+          // Terminate all existing WebSocket connections so close() callback fires promptly
+          node.log('Unbinding aedes mqtt server from ws port: ' + node.mqtt_ws_port);
+          node._wsServer.clients.forEach(function (ws) {
+            ws.terminate();
+          });
+          node._wsServer.close(function () {
+            if (node._wsHttpServer) {
+              node._wsHttpServer.close(function () { done(); });
             } else { done(); }
           });
         } else { done(); }
       }
       function serverClose () {
-        if (node._server) {
-          node._server.close(function () {
+        if (node._netServer) {
+          node.log('Unbinding aedes mqtt server from port: ' + node.mqtt_port);
+          node.status({
+            fill: 'red',
+            shape: 'ring',
+            text: 'node-red:common.status.disconnected'
+          });
+          node._netServer.close(function () {
             if (node.mqtt_ws_path !== '' && node.fullPath) {
+              node.log('Unbinding aedes mqtt server from ws path: ' + node.fullPath);
               delete listenerNodes[node.fullPath];
-              if (node.server) {
-                node.server.close(function () { wsClose(); });
+              // Remove upgrade listener if this is the last WS-path node
+              wsPathNodeCount--;
+              if (wsPathNodeCount <= 0 && serverUpgradeAdded && boundHandleServerUpgrade) {
+                RED.server.removeListener('upgrade', boundHandleServerUpgrade);
+                serverUpgradeAdded = false;
+                boundHandleServerUpgrade = null;
+                wsPathNodeCount = 0;
+              }
+              if (node._wsPathServer) {
+                // Terminate all existing WebSocket connections so close() callback fires promptly
+                node._wsPathServer.clients.forEach(function (ws) {
+                  ws.terminate();
+                });
+                node._wsPathServer.close(function () { wsClose(); });
               } else { wsClose(); }
             } else { wsClose(); }
           });
