@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         node-version: [22.x, 24.x]
-        node-red: [3.x, 4.x]
+        node-red: [3.x, 4.x, 5.x]
 
     steps:
     - uses: actions/checkout@v3
